@@ -18,6 +18,7 @@ func HandleMessage(request []byte) (string, []byte) {
 	// var filePath string
 
 	if message.MessageType  == FILESENT {
+		fmt.Printf("receive file sent message")
 		// TODO: change local file entry table
 		return pathPrefix + message.FileName, nil
 	}

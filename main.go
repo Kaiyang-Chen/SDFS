@@ -25,8 +25,8 @@ func main() {
 	config.InitConfig()
 
 	SWIM.InitSwimInstance()
+	Sdfs.InitSDFS()
 	io.Handle_IO()
-	sdfs.InitSDFS()
 
 
 

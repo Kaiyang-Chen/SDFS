@@ -37,7 +37,13 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 			// Notice, for sdfs, the message handler will return file path
 			filePath, response := messageHandler(packet)
 			if len(filePath) > 0 {
+				fmt.Printf("receive header\n")
 				_, err = connection.WriteToUDP([]byte("ok"), addr)
+				if err != nil {
+					fmt.Println(err)
+					log.Println(err)
+					return
+				}
 			} else{
 				_, err = connection.WriteToUDP(response, addr)
 			}

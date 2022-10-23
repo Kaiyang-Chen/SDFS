@@ -120,7 +120,6 @@ func SdfsDial(host string, FilePath string) ([]byte, error) {
 	n, _, err = connection.ReadFromUDP(buffer)
 	fmt.Printf("test2 \n")
 	if err != nil {
-		fmt.Println(err)
 		log.Println(err)
 		return nil, err
 	}

@@ -47,6 +47,7 @@ type SDFSClient struct {
 var SdfsClient SDFSClient
 
 func InitSDFS() {
+	fmt.Printf("init sdfs\n")
 	SdfsClient.MasterTable = make(map[string]FileAddr)
 	SdfsClient.LocalTable = make(map[string]FileAddr)
 	SdfsClient.ReplicaAddr.NumReplica = 0
