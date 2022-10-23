@@ -8,12 +8,13 @@ import (
 )
 
 const PORT = "8888"
+const SDFSPORT = "8889"
 
 type Config struct {
 	ServerID int    // A Unique identifier assigned by the introducer, each associated with server's address
 	IP       string // My IP address for the current process
 	Port     string // My port for the current process
-
+	SdfsPort	string  // My port for the sdfs
 	PeersAddr      []string // Address of my peers, with IP and Port
 	IntroducerAddr string   // Address of the introducer in the group, which is pre-determined
 	Mu             sync.RWMutex
@@ -24,7 +25,7 @@ type Config struct {
 // Otherwise we will run our program on VMs.
 const DEBUG = false
 
-var MyConfig = Config{-1, "", PORT, make([]string, 0), "", sync.RWMutex{}}
+var MyConfig = Config{-1, "", PORT, SDFSPORT, make([]string, 0), "", sync.RWMutex{}}
 
 // InitConfig
 // If DEBUG is true, then all process will use localhost with different ports;
@@ -51,6 +52,10 @@ func InitConfig() {
 
 func (config *Config) GetMyAddr() string {
 	return MyConfig.IP + ":" + MyConfig.Port
+}
+
+func (config *Config) GetSdfsAddr() string {
+	return MyConfig.IP + ":" + MyConfig.SdfsPort
 }
 
 func (config *Config) IsIntroducer() bool {

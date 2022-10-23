@@ -83,12 +83,6 @@ func (swim *SWIM) UpdateMembershipList() {
 	swim.Mu.Unlock()
 }
 
-func min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
 
 func (swim *SWIM) JoinViaIntroducer() {
 	if !config.MyConfig.IsIntroducer() {
@@ -124,6 +118,16 @@ func (swim *SWIM) SwimShowPeer() {
 		fmt.Printf("[Peer %s]: %s\n", addr, status)
 	}
 	fmt.Printf("\n")
+}
+
+func (swim *SWIM) SwimGetPeer() []string {
+	var res []string
+	for addr, member := range swim.MembershipList {
+		if member.State == 0 && addr != config.MyConfig.GetMyAddr(){
+			res = append(res, addr)
+		}
+	}
+	return res
 }
 
 func InitSwimInstance() {

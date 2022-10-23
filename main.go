@@ -6,7 +6,6 @@ import (
 	"CS425MP2/io"
 	"log"
 	"os"
-	"fmt"
 	// "CS425MP2/network"
 )
 func init() {
@@ -26,6 +25,8 @@ func main() {
 
 	SWIM.InitSwimInstance()
 	io.Handle_IO()
+
+
 	// go network.PeriodicalRecorder()
 
 	// for {

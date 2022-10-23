@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"CS425MP2/config"
 	"CS425MP2/SWIM"
+	"CS425MP2/sdfs"
 )
 
 
@@ -26,6 +27,10 @@ func Handle_IO() {
 		}
 		if strings.Compare("member", input) == 0 {
 			SWIM.MySwimInstance.SwimShowPeer()
+		}
+		if strings.Contains(input, "put") {
+			tmp := strings.Split(input, " ")
+			Sdfs.SdfsClient.SendFile("fa22-cs425-4802.cs.illinois.edu:8889", "/home/kc68/test")
 		}
 
 	}

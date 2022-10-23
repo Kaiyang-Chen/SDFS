@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func HandleMessage(request []byte) []byte {
+func HandleMessage(request []byte) (string, []byte) {
 	var message Message
 	err := json.Unmarshal(request, &message)
 	if err != nil {
@@ -24,7 +24,7 @@ func HandleMessage(request []byte) []byte {
 		if err != nil {
 			log.Println("[Marshal]: ", err)
 		}
-		return jsonReply
+		return "", jsonReply
 	}
 
 	if message.MessageType == PING {
@@ -42,7 +42,7 @@ func HandleMessage(request []byte) []byte {
 	if err != nil {
 		log.Println("[Marshal]: ", err)
 	}
-	return jsonReply
+	return "", jsonReply
 }
 
 func (swim *SWIM) HandleJOIN(message Message) (Message, error) {
@@ -159,8 +159,8 @@ func (swim *SWIM) HandlePINGREQ(message Message) (Message, error) {
 
 func (swim *SWIM) HandlePiggybacks(piggybacks []Piggyback) {
 	log.Printf("[HandlePiggybacks]: piggybacks=%v", piggybacks)
-	swim.SwimShowPeer()
-	defer swim.SwimShowPeer()
+	// swim.SwimShowPeer()
+	// defer swim.SwimShowPeer()
 	if piggybacks == nil {
 		return
 	}
