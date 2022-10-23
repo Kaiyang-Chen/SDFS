@@ -29,6 +29,7 @@ func Handle_IO() {
 			SWIM.MySwimInstance.SwimShowPeer()
 		}
 		if strings.Contains(input, "put") {
+			fmt.Printf("putting \n")
 			tmp := strings.Split(input, " ")
 			Sdfs.SdfsClient.SendFile("fa22-cs425-4802.cs.illinois.edu:8889", tmp[1])
 		}

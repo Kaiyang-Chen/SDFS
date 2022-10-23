@@ -6,6 +6,7 @@ import (
 	"CS425MP2/network"
 	"sync"
 	"log"
+	"fmt"
 	// "golang.org/x/exp/slices"
 )
 
@@ -54,6 +55,7 @@ func InitSDFS() {
 	// 	SdfsClient.ResourceDistribution = make(map[string]int)
 	// }
 	go func() {
+		fmt.Println(config.MyConfig.GetSdfsAddr())
 		err := network.Listen(config.MyConfig.GetSdfsAddr(), HandleMessage)
 		if err != nil {
 			log.Fatal(err)

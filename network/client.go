@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"io"
+	"fmt"
 )
 
 const DropPacketProbability = 0.00
@@ -115,17 +116,22 @@ func SdfsDial(host string, FilePath string) ([]byte, error) {
 		return nil, err
 	}
 	buffer := make([]byte, 1024)
+	fmt.Printf("test1 \n")
 	n, _, err = connection.ReadFromUDP(buffer)
-
+	fmt.Printf("test2 \n")
 	if err != nil {
+		fmt.Println(err)
 		log.Println(err)
 		return nil, err
 	}
+	fmt.Println(buffer[:n])
 	if "ok" == string(buffer[:n]) {
+		fmt.Printf("begin sending file \n")
 		buffer, n, err = SendFile(FilePath, connection)   
 	}
 	CONN--
 	if "received" == string(buffer[:n]) {
+		fmt.Printf("end sending file \n")
 		return buffer[:n], nil
 	} else {
 		log.Println("File sending failed: ", FilePath)

@@ -4,6 +4,7 @@ import (
 	"CS425MP2/SWIM"
 	"CS425MP2/config"
 	"CS425MP2/io"
+	"CS425MP2/sdfs"
 	"log"
 	"os"
 	// "CS425MP2/network"
@@ -25,6 +26,8 @@ func main() {
 
 	SWIM.InitSwimInstance()
 	io.Handle_IO()
+	sdfs.InitSDFS()
+
 
 
 	// go network.PeriodicalRecorder()
