@@ -7,7 +7,7 @@ import (
 
 func(sdfs *SDFSClient) SendFile(host string, filePath string){
 	response, err := network.SdfsDial(host, filePath)
-	var string replyMessage 
+	var replyMessage string
 	if err == nil {
 		err = json.Unmarshal(response, &replyMessage)
 	}

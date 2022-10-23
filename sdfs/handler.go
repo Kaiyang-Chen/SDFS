@@ -7,15 +7,15 @@ import(
 
 const pathPrefix = "/home/kc68/files/"
 
-func HandelMessage(request []byte) (string, []byte) {
+func HandleMessage(request []byte) (string, []byte) {
 	var message FileMessgae
 	err := json.Unmarshal(request, &message)
 	if err != nil {
 		log.Println("[Unmarshal]: ", err)
 	}
 
-	var reply FileMessgae
-	var filePath string
+	// var reply FileMessgae
+	// var filePath string
 
 	if message.MessageType  == FILESENT {
 		// TODO: change local file entry table

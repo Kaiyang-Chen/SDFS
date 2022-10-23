@@ -2,8 +2,10 @@ package Sdfs
 
 import (
 	"CS425MP2/config"
-	"CS425MP2/SWIM"
+	// "CS425MP2/SWIM"
+	"CS425MP2/network"
 	"sync"
+	"log"
 	// "golang.org/x/exp/slices"
 )
 
@@ -46,7 +48,7 @@ var SdfsClient SDFSClient
 func InitSDFS() {
 	SdfsClient.MasterTable = make(map[string]FileAddr)
 	SdfsClient.LocalTable = make(map[string]FileAddr)
-	SdfsClient.ReplicaAddr = make(FileAddr)
+	SdfsClient.ReplicaAddr.NumReplica = 0
 	// if config.MyConfig.IsIntroducer() {
 	// 	go PeriodicalCheck()
 	// 	SdfsClient.ResourceDistribution = make(map[string]int)
