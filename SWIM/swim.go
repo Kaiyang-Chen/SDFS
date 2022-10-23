@@ -3,11 +3,8 @@ package SWIM
 import (
 	"CS425MP2/config"
 	"CS425MP2/network"
-	"bufio"
 	"fmt"
 	"log"
-	"os"
-	"strings"
 	"sync"
 	"time"
 )
@@ -121,7 +118,7 @@ func convertStateToStr(state int) string {
 }
 
 func (swim *SWIM) SwimShowPeer() {
-	log.Printf("[Server %s]: membership list:\n", config.MyConfig.GetMyAddr())
+	fmt.Printf("[Server %s]: membership list:\n", config.MyConfig.GetMyAddr())
 	for addr, member := range swim.MembershipList {
 		status := convertStateToStr(member.State)
 		fmt.Printf("[Peer %s]: %s\n", addr, status)
@@ -151,22 +148,7 @@ func InitSwimInstance() {
 	}()
 
 	go MySwimInstance.periodicalPing()
-	inputReader := bufio.NewReader(os.Stdin)
-	for {
-		input, err := inputReader.ReadString('\n')
-		input = strings.Replace(input, "\n", "", -1)
-		if err != nil || input == "" {
-			fmt.Printf("Failed to read the input! Try again!\n")
-			continue
-		}
-
-		if strings.Compare("leave", input) == 0 {
-			if !config.MyConfig.IsIntroducer() {
-				os.Exit(0)
-			}
-		}
-
-	}
+	
 }
 
 func (swim *SWIM) periodicalPing() {
