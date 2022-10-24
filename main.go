@@ -4,11 +4,12 @@ import (
 	"CS425MP2/SWIM"
 	"CS425MP2/config"
 	"CS425MP2/io"
-	"CS425MP2/sdfs"
+	Sdfs "CS425MP2/sdfs"
 	"log"
 	"os"
 	// "CS425MP2/network"
 )
+
 func init() {
 	f, err := os.OpenFile("./sdfs.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
 	if err != nil {
@@ -27,8 +28,6 @@ func main() {
 	SWIM.InitSwimInstance()
 	Sdfs.InitSDFS()
 	io.Handle_IO()
-
-
 
 	// go network.PeriodicalRecorder()
 

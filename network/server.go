@@ -1,11 +1,12 @@
 package network
 
 import (
+	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
-	"io"
-	"fmt"
+	"sync"
 )
 
 func Listen(address string, messageHandler func([]byte) (string, []byte)) error {
@@ -26,6 +27,7 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 
 	for {
 		n, addr, err := connection.ReadFromUDP(buffer)
+		fmt.Println(connection.RemoteAddr())
 		if err != nil {
 			log.Println(err)
 			return err
@@ -34,6 +36,8 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 		}
 		bufferCopy := make([]byte, n)
 		copy(bufferCopy, buffer[:n])
+		wg := sync.WaitGroup{}
+		wg.Add(1)
 		go func(packet []byte) {
 			// Notice, for sdfs, the message handler will return file path
 			filePath, response := messageHandler(packet)
@@ -45,8 +49,9 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 					log.Println(err)
 					return
 				}
-			} else{
+			} else {
 				_, err = connection.WriteToUDP(response, addr)
+				wg.Done()
 			}
 			if err != nil {
 				log.Println(err)
@@ -56,41 +61,51 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 			}
 			if len(filePath) > 0 {
 				RecvFile(filePath, connection)
+				wg.Done()
 			}
+
 		}(bufferCopy)
+		wg.Wait()
 	}
 
 }
 
-
-func RecvFile(fileName string, conn* net.UDPConn) {
+func RecvFile(fileName string, conn *net.UDPConn) {
+	if conn == nil {
+		fmt.Printf("null pointer")
+		return
+	}
 	fmt.Println("creating file: ", fileName)
-	f, err := os.OpenFile(fileName, os.O_WRONLY | os.O_CREATE, 0755)
+	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
 	// f, err := os.Create(fileName)
 	if err != nil {
 		fmt.Println("Create err:", err)
-	   	log.Println("Create err:", err)
-	   	return
+		log.Println("Create err:", err)
+		return
 	}
 	defer f.Close()
+
+	fmt.Println(conn.RemoteAddr())
 	fmt.Println("start receiving file: ", fileName)
 	buf := make([]byte, 4096)
 	for {
-	   	n, addr, err := conn.ReadFromUDP(buf)
-	   	if err != nil {
-		  	if err == io.EOF {
+		fmt.Printf("aa")
+		n, addr, err := conn.ReadFromUDP(buf)
+		fmt.Println(addr)
+		// TODO: need to handle EOF
+		if err != nil {
+			if err == io.EOF {
 				fmt.Println("File received: ", fileName)
-			 	log.Println("File received: ", fileName)
+				log.Println("File received: ", fileName)
 				_, err := conn.WriteToUDP([]byte("received"), addr)
 				if err != nil {
 					log.Println(err)
 				}
-		  	} else {
-			 	log.Println("Read file err:", err)
-		  	}
-		  	return
-	   	}
-	   	f.Write(buf[:n])
+			} else {
+				log.Println("Read file err:", err)
+			}
+			return
+		}
+		f.Write(buf[:n])
 	}
 }
- 
