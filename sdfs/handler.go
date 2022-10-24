@@ -3,6 +3,7 @@ package Sdfs
 import(
 	"encoding/json"
 	"log"
+	"os"
 	"fmt"
 )
 
@@ -21,7 +22,9 @@ func HandleMessage(request []byte) (string, []byte) {
 	if message.MessageType  == FILESENT {
 		fmt.Printf("receive file sent message")
 		// TODO: change local file entry table
-		return pathPrefix + message.FileName, nil
+		fileInfo, _ := os.Stat(message.FileName)
+
+		return pathPrefix + fileInfo.Name(), nil
 	}
 	return "", nil
 

@@ -65,10 +65,12 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 
 func RecvFile(fileName string, conn* net.UDPConn) {
 	fmt.Println("creating file: ", fileName)
-	f, err := os.Create(fileName)
+	f, err := os.OpenFile(fileName, os.O_WRONLY | os.O_CREATE, 0755)
+	// f, err := os.Create(fileName)
 	if err != nil {
-	   log.Println("Create err:", err)
-	   return
+		fmt.Println("Create err:", err)
+	   	log.Println("Create err:", err)
+	   	return
 	}
 	defer f.Close()
 	fmt.Println("start receiving file: ", fileName)
