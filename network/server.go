@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"io"
+	"fmt"
 )
 
 func Listen(address string, messageHandler func([]byte) (string, []byte)) error {
@@ -63,18 +64,20 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 
 
 func RecvFile(fileName string, conn* net.UDPConn) {
+	fmt.Println("creating file: ", fileName)
 	f, err := os.Create(fileName)
 	if err != nil {
 	   log.Println("Create err:", err)
 	   return
 	}
 	defer f.Close()
- 
+	fmt.Println("start receiving file: ", fileName)
 	buf := make([]byte, 4096)
 	for {
 	   	n, addr, err := conn.ReadFromUDP(buf)
 	   	if err != nil {
 		  	if err == io.EOF {
+				fmt.Println("File received: ", fileName)
 			 	log.Println("File received: ", fileName)
 				_, err := conn.WriteToUDP([]byte("received"), addr)
 				if err != nil {

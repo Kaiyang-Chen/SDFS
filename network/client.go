@@ -64,7 +64,7 @@ func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
 	   return nil, 0, err
 	}
 	defer f.Close()                 
- 
+	fmt.Println("start sending file: ", path)
 	// send all contents in file
 	buf := make([]byte, 4096)
 	for {
@@ -81,17 +81,19 @@ func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
 	   }
 	   conn.Write(buf[:n]) 
 	}
+	fmt.Println("end sending file: ", path)
 	// Check whether file transmission done on server side
 	n, _, err := conn.ReadFromUDP(buf)
 	if err != nil {
 		log.Println(err)
 		return nil, 0, err
 	}
+	fmt.Println(string(buf[:n]))
 	return buf, n, nil
 }
  
 
-func SdfsDial(host string, FilePath string) ([]byte, error) {
+func SdfsDial(host string, FilePath string, request []byte) ([]byte, error) {
 	if CONN >= MAXCONN {
 		return nil, errors.New("maximum connection reached")
 	}
@@ -104,13 +106,14 @@ func SdfsDial(host string, FilePath string) ([]byte, error) {
 	}
 
 	defer connection.Close()
-	fileInfo, err := os.Stat(FilePath)
-	if err != nil {
-		log.Println("os.Stat err:", err)
-		return nil, err
-	}
+	// fileInfo, err := os.Stat(FilePath)
+	// if err != nil {
+	// 	log.Println("os.Stat err:", err)
+	// 	return nil, err
+	// }
 
-	n, err := connection.Write([]byte(fileInfo.Name()))
+	// n, err := connection.Write([]byte(fileInfo.Name()))
+	n, err := connection.Write(request)
 	if err != nil {
 		log.Println(err)
 		return nil, err
