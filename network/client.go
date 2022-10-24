@@ -58,6 +58,8 @@ func Dial(host string, request []byte) ([]byte, error) {
 }
 
 func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
+	fmt.Println(conn.RemoteAddr().String())
+	fmt.Println(conn.LocalAddr().String())
 	f, err := os.Open(path)
 	if err != nil {
 	   log.Println("os.Open err:", err)
@@ -81,15 +83,18 @@ func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
 	   }
 	   conn.Write(buf[:n]) 
 	}
+	// TODO: Send EOF Signal
+
 	fmt.Println("end sending file: ", path)
 	// Check whether file transmission done on server side
-	n, _, err := conn.ReadFromUDP(buf)
+	buffer := make([]byte, 1024)
+	n, err := conn.Read(buffer)
 	if err != nil {
 		log.Println(err)
 		return nil, 0, err
 	}
-	fmt.Println(string(buf[:n]))
-	return buf, n, nil
+	fmt.Println(string(buffer[:n]))
+	return buffer, n, nil
 }
  
 
@@ -104,15 +109,10 @@ func SdfsDial(host string, FilePath string, request []byte) ([]byte, error) {
 		log.Println(err)
 		return nil, err
 	}
+	fmt.Println(connection.LocalAddr().String())
 
 	defer connection.Close()
-	// fileInfo, err := os.Stat(FilePath)
-	// if err != nil {
-	// 	log.Println("os.Stat err:", err)
-	// 	return nil, err
-	// }
 
-	// n, err := connection.Write([]byte(fileInfo.Name()))
 	n, err := connection.Write(request)
 	if err != nil {
 		log.Println(err)
