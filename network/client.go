@@ -58,8 +58,6 @@ func Dial(host string, request []byte) ([]byte, error) {
 }
 
 func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
-	fmt.Println(conn.RemoteAddr().String())
-	fmt.Println(conn.LocalAddr().String())
 	f, err := os.Open(path)
 	if err != nil {
 	   log.Println("os.Open err:", err)
@@ -67,13 +65,16 @@ func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
 	}
 	defer f.Close()                 
 	fmt.Println("start sending file: ", path)
+	log.Println("start sending file: ", path)
 	// send all contents in file
 	buf := make([]byte, 4096)
 	for {
-	   	n, err := f.Read(buf)        
+	   	n, err := f.Read(buf)     
+		fmt.Println(n)   
 	   	if err != nil {
 		  	if err == io.EOF {
 			 	log.Println("file read done: ", path)
+				conn.Write(buf[:n]) 
 			 	break
 		  	} else {
 			 	log.Println("f.Read err:", err)
@@ -83,8 +84,8 @@ func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
 	   }
 	   conn.Write(buf[:n]) 
 	}
-	// TODO: Send EOF Signal
 
+	log.Println("end sending file: ", path)
 	fmt.Println("end sending file: ", path)
 	// Check whether file transmission done on server side
 	buffer := make([]byte, 1024)
@@ -93,7 +94,6 @@ func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
 		log.Println(err)
 		return nil, 0, err
 	}
-	fmt.Println(string(buffer[:n]))
 	return buffer, n, nil
 }
  
@@ -109,7 +109,6 @@ func SdfsDial(host string, FilePath string, request []byte) ([]byte, error) {
 		log.Println(err)
 		return nil, err
 	}
-	fmt.Println(connection.LocalAddr().String())
 
 	defer connection.Close()
 
@@ -119,21 +118,18 @@ func SdfsDial(host string, FilePath string, request []byte) ([]byte, error) {
 		return nil, err
 	}
 	buffer := make([]byte, 1024)
-	fmt.Printf("test1 \n")
 	n, _, err = connection.ReadFromUDP(buffer)
-	fmt.Printf("test2 \n")
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
-	fmt.Println(buffer[:n])
 	if "ok" == string(buffer[:n]) {
-		fmt.Printf("begin sending file \n")
 		buffer, n, err = SendFile(FilePath, connection)   
 	}
 	CONN--
 	if "received" == string(buffer[:n]) {
-		fmt.Printf("end sending file \n")
+		fmt.Println("File sending succeed: ", FilePath)
+		log.Println("File sending failed: ", FilePath)
 		return buffer[:n], nil
 	} else {
 		log.Println("File sending failed: ", FilePath)
