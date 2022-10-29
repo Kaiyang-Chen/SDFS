@@ -2,7 +2,6 @@ package network
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -27,7 +26,7 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 
 	for {
 		n, addr, err := connection.ReadFromUDP(buffer)
-		fmt.Println(connection.RemoteAddr())
+		// fmt.Println(connection.RemoteAddr())
 		if err != nil {
 			log.Println(err)
 			return err
@@ -71,15 +70,9 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 }
 
 func RecvFile(fileName string, conn *net.UDPConn) {
-	if conn == nil {
-		fmt.Printf("null pointer")
-		return
-	}
-	fmt.Println("creating file: ", fileName)
 	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
 	// f, err := os.Create(fileName)
 	if err != nil {
-		fmt.Println("Create err:", err)
 		log.Println("Create err:", err)
 		return
 	}
@@ -89,12 +82,9 @@ func RecvFile(fileName string, conn *net.UDPConn) {
 	fmt.Println("start receiving file: ", fileName)
 	buf := make([]byte, 4096)
 	for {
-		fmt.Printf("aa")
 		n, addr, err := conn.ReadFromUDP(buf)
-		fmt.Println(addr)
-		// TODO: need to handle EOF
-		if err != nil {
-			if err == io.EOF {
+		if err != nil || n == 0 {
+			if n == 0 {
 				fmt.Println("File received: ", fileName)
 				log.Println("File received: ", fileName)
 				_, err := conn.WriteToUDP([]byte("received"), addr)
