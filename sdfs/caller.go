@@ -53,6 +53,26 @@ func(sdfs *SDFSClient) SendFileReq(fileNode string, sdfsName string, targetAddr 
 	return err
 }
 
+
+func(sdfs *SDFSClient) GetFile(filePath string, sdfsName string) error{
+	var LocalFilePath map[string]FileAddr // to store the local file path 
+	LocalFilePath[filePath] = FileAddr{}
+	message := FileMessage{
+		SenderAddr:  config.MyConfig.GetSdfsAddr(),
+		MessageType: SENTFILEREQ,
+		TargetAddr:  config.MyConfig.GetSdfsAddr(),
+		FileName: 	 sdfsName,
+		ReplicaAddr: nil,
+		CopyTable:	LocalFilePath,
+	}
+	_, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
+	if err != nil {
+		log.Println(err)
+	}
+	return err
+}
+
+
 func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 	log.Println("Put file!\n")
 	message := FileMessage{

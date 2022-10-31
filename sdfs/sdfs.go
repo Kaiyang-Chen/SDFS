@@ -63,7 +63,9 @@ func InitSDFS() {
 	SdfsClient.ResourceDistribution = make(map[string]FileAddr)
 	if config.MyConfig.IsIntroducer() {
 		go SdfsClient.PeriodicalCheckMaster()
-		
+		go SdfsClient.PeriodicalCheckResource()
+		// TODO: garbage collection
+
 	}
 	_, err := os.Stat(PathPrefix)
     if err != nil {
@@ -145,8 +147,6 @@ func (sdfs *SDFSClient) PeriodicalCheckResource() {
 				}
 			}
 		}
-
-
 
 		time.Sleep(5 * time.Second)
 	}

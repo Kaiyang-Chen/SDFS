@@ -3,7 +3,8 @@ package Sdfs
 import(
 	"encoding/json"
 	"log"
-	// "os"
+	"os"
+	"path"
 	"sync"
 	"fmt"
 	"sort"
@@ -44,10 +45,24 @@ func HandleSdfsMessage(request []byte) (string, []byte) {
 func (sdfs *SDFSClient) HandleFileSent(message FileMessage) (string, []byte){
 	log.Printf("[HandleFileSent]: message=%v", message)
 	fmt.Printf("[HandleFileSent]: message=%v", message)
-	sdfs.LocalMutex.Lock()
-	defer sdfs.LocalMutex.Unlock()
-	sdfs.LocalTable[message.FileName] = FileAddr{len(message.ReplicaAddr), message.ReplicaAddr}
-	return PathPrefix + message.FileName, nil
+	if message.ReplicaAddr == nil {
+		var localFilePath string
+		for key  := range message.CopyTable {
+			localFilePath = key
+		}
+		dir := path.Dir(localFilePath)
+		_, err := os.Stat(dir)
+		if err != nil {
+			os.Mkdir(dir, 0755)
+		}
+		return localFilePath, nil
+	} else {
+		sdfs.LocalMutex.Lock()
+		defer sdfs.LocalMutex.Unlock()
+		sdfs.LocalTable[message.FileName] = FileAddr{len(message.ReplicaAddr), message.ReplicaAddr}
+		return PathPrefix + message.FileName, nil
+	}
+	
 
 }
 
