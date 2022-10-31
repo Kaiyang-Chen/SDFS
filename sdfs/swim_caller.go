@@ -153,6 +153,9 @@ func confirmTicker(targetAddr string) {
 		member.State = CONFIRM
 	}
 	deleteDeadServer(targetAddr)
+	if config.MyConfig.IsIntroducer(){
+		SdfsClient.HandleLeaving(targetAddr)
+	}
 	piggyback := Piggyback{
 		CONFIRM, targetAddr,
 		MySwimInstance.ServerNewestPiggyback[targetAddr].ServerIncarnationNum,

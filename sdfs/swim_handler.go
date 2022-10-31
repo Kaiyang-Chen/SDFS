@@ -226,7 +226,9 @@ func (swim *SWIM) HandlePiggybacks(piggybacks []Piggyback) {
 			config.MyConfig.Mu.Lock()
 			deleteDeadServer(piggyback.ServerAddr)
 			config.MyConfig.Mu.Unlock()
-			SdfsClient.HandleLeaving(piggyback.ServerAddr)
+			if config.MyConfig.IsIntroducer(){
+				SdfsClient.HandleLeaving(piggyback.ServerAddr)
+			}
 		} else if piggyback.Type == SUSPECT {
 			member.State = piggyback.Type
 			go confirmTicker(piggyback.ServerAddr)

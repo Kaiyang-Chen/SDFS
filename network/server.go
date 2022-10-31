@@ -77,7 +77,7 @@ func RecvFile(fileName string, conn *net.UDPConn) {
 	}
 	defer f.Close()
 
-	fmt.Println(conn.RemoteAddr())
+	// fmt.Println(conn.RemoteAddr())
 	fmt.Println("start receiving file: ", fileName)
 	buf := make([]byte, 4096)
 	for {

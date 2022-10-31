@@ -69,7 +69,7 @@ func InitSDFS() {
         os.Mkdir(PathPrefix, 0755)
     }
 	go func() {
-		fmt.Println(config.MyConfig.GetSdfsAddr())
+		// fmt.Println(config.MyConfig.GetSdfsAddr())
 		err := network.Listen(config.MyConfig.GetSdfsAddr(), HandleSdfsMessage)
 		if err != nil {
 			log.Fatal(err)
@@ -106,7 +106,8 @@ func (sdfs *SDFSClient) PeriodicalCheck() {
 		TmpMemList := MySwimInstance.SwimGetPeer()
 		var NewCopyList	[]string
 		for _, addr := range sdfs.ReplicaAddr.StoreAddr {
-			if contains(TmpMemList, addr){
+			sdfsAddr := strings.Split(addr, ":")[0] + ":" + "8888"
+			if !contains(TmpMemList, sdfsAddr){
 				sdfs.ReplicaAddr.NumReplica -= 1
 			} else {
 				NewCopyList = append(NewCopyList, addr)
@@ -117,9 +118,8 @@ func (sdfs *SDFSClient) PeriodicalCheck() {
 		if len(NewCopyList) < target {
 			for _, addr := range TmpMemList {
 				sdfsAddr := strings.Split(addr, ":")[0] + ":" + "8889"
-				if !contains(sdfs.ReplicaAddr.StoreAddr, sdfsAddr){
-					copyTable := sdfs.MasterTable
-					sdfs.SendTableCopy(sdfsAddr, copyTable)
+				if !contains(NewCopyList, sdfsAddr){
+					
 					sdfs.ReplicaAddr.NumReplica += 1
 					NewCopyList = append(NewCopyList, sdfsAddr)
 				}
@@ -129,6 +129,10 @@ func (sdfs *SDFSClient) PeriodicalCheck() {
 			}
 		}
 		sdfs.ReplicaAddr.StoreAddr = NewCopyList
+		for _, addr := range sdfs.ReplicaAddr.StoreAddr{
+			copyTable := sdfs.MasterTable
+			sdfs.SendTableCopy(addr, copyTable)
+		}
 		time.Sleep(2 * time.Second)
 	}
 

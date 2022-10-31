@@ -91,10 +91,10 @@ func (sdfs *SDFSClient)HandleTargetReq(message FileMessage) (FileMessage, error)
 		wg.Add(len(sdfs.ReplicaAddr.StoreAddr))
 		for _, addr := range sdfs.ReplicaAddr.StoreAddr {
 			go func(address string) {
-				key := message.FileName
-				value := sdfs.MasterTable[message.FileName]
-				tmp := map[string]FileAddr{key:value}
-				sdfs.SendTableCopy(address, tmp)
+				// key := message.FileName
+				// value := sdfs.MasterTable[message.FileName]
+				// tmp := map[string]FileAddr{key:value}
+				sdfs.SendTableCopy(address, sdfs.MasterTable)
 				wg.Done()
 			}(addr)
 		}
@@ -118,9 +118,10 @@ func (sdfs *SDFSClient)HandleMasterUpdate(message FileMessage) (FileMessage, err
 	log.Printf("[HandleMasterUpdate]: message=%v", message)
 	sdfs.MasterMutex.Lock()
 	defer sdfs.MasterMutex.Unlock()
-	for f, addr := range message.CopyTable {
-		sdfs.MasterTable[f] = addr
-	}
+	// for f, addr := range message.CopyTable {
+	// 	sdfs.MasterTable[f] = addr
+	// }
+	sdfs.MasterTable = message.CopyTable
 	reply := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: ACKOWLEDGE,
@@ -141,30 +142,31 @@ func(sdfs *SDFSClient) HandleJoin(addr string){
 
 
 func (sdfs *SDFSClient)HandleLeaving(addr string){
-	// TODO: only leader delete this
-	if config.MyConfig.IsIntroducer(){
-		sdfs.ResourceMutex.Lock()
-		sdfsAddr := strings.Split(addr, ":")[0] + ":" + "8889"
-		delete(sdfs.ResourceDistribution, sdfsAddr)
-		sdfs.ResourceMutex.Unlock()
-	}
+	
+	sdfs.ResourceMutex.Lock()
+	sdfsAddr := strings.Split(addr, ":")[0] + ":" + "8889"
+	delete(sdfs.ResourceDistribution, sdfsAddr)
+	sdfs.ResourceMutex.Unlock()
+
 	sdfs.MasterMutex.Lock()
 	defer sdfs.MasterMutex.Unlock()
-	for _, v := range sdfs.MasterTable {
+	for k, v := range sdfs.MasterTable {
 		idx := -1
 		for i, tmpAdd := range v.StoreAddr {
-			if tmpAdd == addr {
+			if tmpAdd == sdfsAddr {
 				idx = i
 			}
 		}
-		if idx > 0{
-			tmp := v.StoreAddr
-			tmp[idx] = tmp[len(v.StoreAddr)-1]
-			v.StoreAddr = tmp[:len(v.StoreAddr)-1]
-			v.NumReplica = v.NumReplica-1
+		if idx >= 0{
+			if entry, ok := sdfs.MasterTable[k]; ok {
+				tmp := v.StoreAddr
+				tmp[idx] = tmp[len(v.StoreAddr)-1]
+				entry.StoreAddr = tmp[:len(v.StoreAddr)-1]
+				entry.NumReplica = v.NumReplica-1
+				sdfs.MasterTable[k] = entry
+			}
 		}
 	}
-
 }
 
 

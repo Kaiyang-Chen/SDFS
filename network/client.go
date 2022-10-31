@@ -64,7 +64,7 @@ func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
 	   return nil, 0, err
 	}
 	defer f.Close()                 
-	fmt.Println("start sending file: ", path)
+	// fmt.Println("start sending file: ", path)
 	log.Println("start sending file: ", path)
 	// send all contents in file
 	buf := make([]byte, 4096)
@@ -86,7 +86,7 @@ func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
 	}
 
 	log.Println("end sending file: ", path)
-	fmt.Println("end sending file: ", path)
+	// fmt.Println("end sending file: ", path)
 	// Check whether file transmission done on server side
 	buffer := make([]byte, 1024)
 	n, err := conn.Read(buffer)
