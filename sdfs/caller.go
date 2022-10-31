@@ -20,7 +20,7 @@ func (sdfs *SDFSClient) SendMessage(request FileMessage, host string, filePath s
 	return replyMessage, err
 }
 
-func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, success *chan bool, repAddr []string) (FileMessage, error){
+func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, success *chan bool, repAddr []string, copyTable map[string]FileAddr) (FileMessage, error){
 	fmt.Printf("Sending file %s.\n", sdfsName)
 	message := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
@@ -28,7 +28,7 @@ func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, s
 		TargetAddr:  host,
 		FileName: 	 sdfsName,
 		ReplicaAddr: repAddr,
-		CopyTable:	nil,
+		CopyTable:	copyTable,
 	}
 	reply, err := sdfs.SendMessage(message, host, filePath, sdfsName)
 	if err != nil {
@@ -40,14 +40,14 @@ func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, s
 
 }
 
-func(sdfs *SDFSClient) SendFileReq(fileNode string, sdfsName string, targetAddr string, repAddr []string) error {
+func(sdfs *SDFSClient) SendFileReq(fileNode string, sdfsName string, targetAddr string, repAddr []string, copyTable map[string]FileAddr) error {
 	message := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: SENTFILEREQ,
 		TargetAddr:  targetAddr,
 		FileName: 	 sdfsName,
 		ReplicaAddr: repAddr,
-		CopyTable:	nil,
+		CopyTable:	copyTable,
 	}
 	_, err := sdfs.SendMessage(message, fileNode, "", "")
 	return err
@@ -59,7 +59,7 @@ func(sdfs *SDFSClient) GetFile(filePath string, sdfsName string) error{
 	LocalFilePath[filePath] = FileAddr{}
 	message := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
-		MessageType: SENTFILEREQ,
+		MessageType: GETFILEREQ,
 		TargetAddr:  config.MyConfig.GetSdfsAddr(),
 		FileName: 	 sdfsName,
 		ReplicaAddr: nil,
@@ -91,7 +91,7 @@ func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 	}
 	success := make(chan bool, len(reply.ReplicaAddr))
 	for _, addr := range reply.ReplicaAddr {
-		go sdfs.SendFile(addr, filePath, sdfsName, &success, reply.ReplicaAddr)
+		go sdfs.SendFile(addr, filePath, sdfsName, &success, reply.ReplicaAddr, nil)
 	}
 	ok := false
 	for i := 0; i < len(reply.ReplicaAddr); i++ {

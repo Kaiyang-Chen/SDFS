@@ -35,6 +35,10 @@ func Handle_IO() {
 			Sdfs.SdfsClient.ShowLocalTable()
 		}
 		if strings.Compare("resource", input) == 0 {
+			tmp := strings.Split(input, " ")
+			Sdfs.SdfsClient.GetFile(tmp[2], tmp[1])
+		}
+		if strings.Contains(input, "get"){
 			Sdfs.SdfsClient.ShowResourceDistribution()
 		}
 		if strings.Contains(input, "put") {

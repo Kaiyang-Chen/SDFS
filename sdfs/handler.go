@@ -87,11 +87,34 @@ func (sdfs *SDFSClient) allocateAddr(num int) []string{
 }
 
 
+func(sdfs *SDFSClient) HandleGetFileReq(message FileMessage) (FileMessage, error) {
+	log.Printf("[HandleGetFileReq]: message=%v", message)
+	fmt.Printf("[HandleGetFileReq]: message=%v", message)
+	var err error
+	for _, addr := range sdfs.MasterTable[message.FileName].StoreAddr {
+		err = sdfs.SendFileReq(addr, message.FileName, message.TargetAddr, message.ReplicaAddr, message.CopyTable)
+		if err == nil {
+			break
+		}
+	}
+	var reply FileMessage
+	reply = FileMessage{
+		SenderAddr:  config.MyConfig.GetSdfsAddr(),
+		MessageType: FILESENTACK,
+		TargetAddr:  "",
+		FileName: 	 message.FileName,
+		ReplicaAddr: nil,
+		CopyTable:	nil,
+	}
+	return reply, err
+}
+
+
 func (sdfs *SDFSClient) HandleFileSentReq(message FileMessage) (FileMessage, error) {
 	log.Printf("[HandleFileSentReq]: message=%v", message)
 	fmt.Printf("[HandleFileSentReq]: message=%v", message)
 	success := make(chan bool, 1)
-	reply, err := sdfs.SendFile(message.TargetAddr, PathPrefix+message.FileName, message.FileName, &success, message.ReplicaAddr)
+	reply, err := sdfs.SendFile(message.TargetAddr, PathPrefix+message.FileName, message.FileName, &success, message.ReplicaAddr, message.CopyTable)
 	ok := <- success
 	if err != nil || !ok{
 		log.Println(err)

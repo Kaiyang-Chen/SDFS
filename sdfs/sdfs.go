@@ -24,6 +24,7 @@ const (
 	MASTERUPDATE = 4
 	ACKOWLEDGE = 5
 	SENTFILEREQ = 6
+	GETFILEREQ = 7
 )
 
 type FileAddr struct {
@@ -130,7 +131,7 @@ func (sdfs *SDFSClient) PeriodicalCheckResource() {
 				for _ , addr:= range newAddrs {
 					for _, fileAddr := range fileNodes{
 						fmt.Printf("call %s to sent file %s to %s.\n", fileAddr, k, addr)
-						err := sdfs.SendFileReq(fileAddr, k, addr, sdfs.MasterTable[k].StoreAddr)
+						err := sdfs.SendFileReq(fileAddr, k, addr, sdfs.MasterTable[k].StoreAddr, nil)
 						if err == nil {
 							sdfs.ResourceMutex.Lock()
 							if entry, ok := sdfs.ResourceDistribution[addr]; ok {
