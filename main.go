@@ -1,7 +1,7 @@
 package main
 
 import (
-	"CS425MP2/SWIM"
+	// "CS425MP2/SWIM"
 	"CS425MP2/config"
 	"CS425MP2/io"
 	Sdfs "CS425MP2/sdfs"
@@ -25,7 +25,8 @@ func main() {
 	// flag.Parse()
 	config.InitConfig()
 
-	SWIM.InitSwimInstance()
+	// SWIM.InitSwimInstance()
+	Sdfs.InitSwimInstance()
 	Sdfs.InitSDFS()
 	io.Handle_IO()
 

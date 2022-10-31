@@ -98,7 +98,7 @@ func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
 }
  
 
-func SdfsDial(host string, FilePath string, request []byte) ([]byte, error) {
+func SdfsDial(host string, FilePath string, sdfsName string, request []byte) ([]byte, error) {
 	if CONN >= MAXCONN {
 		return nil, errors.New("maximum connection reached")
 	}
@@ -123,17 +123,21 @@ func SdfsDial(host string, FilePath string, request []byte) ([]byte, error) {
 		log.Println(err)
 		return nil, err
 	}
-	if "ok" == string(buffer[:n]) {
-		buffer, n, err = SendFile(FilePath, connection)   
-	}
-	CONN--
-	if "received" == string(buffer[:n]) {
-		fmt.Println("File sending succeed: ", FilePath)
-		log.Println("File sending failed: ", FilePath)
+	if(len(FilePath) != 0 && len(sdfsName) != 0){
+		if "ok" == string(buffer[:n]) {
+			buffer, n, err = SendFile(FilePath, connection)   
+		}
+		CONN--
+		if "received" == string(buffer[:n]) {
+			fmt.Println("File sending succeed: ", FilePath)
+			log.Println("File sending failed: ", FilePath)
+			return buffer[:n], nil
+		} else {
+			log.Println("File sending failed: ", FilePath)
+			return buffer[:n], errors.New("File sending failed.")
+		}
+	} else{
+		CONN--
 		return buffer[:n], nil
-	} else {
-		log.Println("File sending failed: ", FilePath)
-		return buffer[:n], errors.New("File sending failed.")
 	}
-	
 }

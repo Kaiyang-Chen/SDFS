@@ -54,6 +54,10 @@ func (config *Config) GetMyAddr() string {
 	return MyConfig.IP + ":" + MyConfig.Port
 }
 
+func (confif *Config) GetLeaderAddr() string {
+	return strings.Split(MyConfig.IntroducerAddr,":")[0] + ":" + MyConfig.SdfsPort
+}
+
 func (config *Config) GetSdfsAddr() string {
 	return MyConfig.IP + ":" + MyConfig.SdfsPort
 }

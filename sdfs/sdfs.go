@@ -7,10 +7,11 @@ import (
 	"sync"
 	"log"
 	"fmt"
-	// "golang.org/x/exp/slices"
+
 )
 
 const MASTERCOPYNUM = 3
+const COPYNUM = 4
 
 // Type of message in sdfs
 const (
@@ -18,6 +19,8 @@ const (
 	TARGETSENT = 1
 	FILESENT = 2
 	FILESENTACK = 3
+	MASTERUPDATE = 4
+	ACKOWLEDGE = 5
 )
 
 type FileAddr struct {
@@ -25,23 +28,26 @@ type FileAddr struct {
 	StoreAddr	[]string
 }
 
-type FileMessgae struct {
+type FileMessage struct {
 	SenderAddr	string
 	MessageType	int
 	TargetAddr	string
 	// TODO File sender datatype
 	FileName	string
-
+	ReplicaAddr []string
+	CopyTable	map[string]FileAddr
 }
+
 
 
 type SDFSClient struct {
 	MasterTable	map[string]FileAddr
 	LocalTable	map[string]FileAddr
-	ResourceDistribution	map[string]int
+	ResourceDistribution	map[string]FileAddr
 	ReplicaAddr	FileAddr
-	MasterMuex  sync.RWMutex
+	MasterMutex  sync.RWMutex
 	LocalMutex	sync.RWMutex
+	ResourceMutex	sync.RWMutex
 }
 
 var SdfsClient SDFSClient
@@ -51,51 +57,69 @@ func InitSDFS() {
 	SdfsClient.MasterTable = make(map[string]FileAddr)
 	SdfsClient.LocalTable = make(map[string]FileAddr)
 	SdfsClient.ReplicaAddr.NumReplica = 0
-	// if config.MyConfig.IsIntroducer() {
-	// 	go PeriodicalCheck()
-	// 	SdfsClient.ResourceDistribution = make(map[string]int)
-	// }
+	SdfsClient.ResourceDistribution = make(map[string]FileAddr)
+	if config.MyConfig.IsIntroducer() {
+		go SdfsClient.PeriodicalCheck()
+		
+	}
 	go func() {
 		fmt.Println(config.MyConfig.GetSdfsAddr())
-		err := network.Listen(config.MyConfig.GetSdfsAddr(), HandleMessage)
+		err := network.Listen(config.MyConfig.GetSdfsAddr(), HandleSdfsMessage)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}()
 
+}
 
+func min(x int, y int) int{
+	if x <= y {
+		return x
+	} else {
+		return y
+	}
+}
 
-
+func contains(s []string, e string) bool {
+    for _, a := range s {
+        if a == e {
+            return true
+        }
+    }
+    return false
 }
 
 
-// PeriodicalCheck
-// Only called by Master in SDFS, to check whether the replica node for globle table still alive. If not, send copy to new replica node.
-// func PeriodicalCheck() {
-// 	TmpMemList = SWIM.MySwimInstance.SwimGetPeer()
-// 	var NewCopyList	[]string
-// 	for addr := range SdfsClient.ReplicaAddr.StoreAddr {
-// 		if !slices.Contains(TmpMemList, addr){
-// 			SdfsClient.ReplicaAddr.NumReplica -= 1
-// 		} else {
-// 			NewCopyList.append(addr)
-// 		}
-// 	}
-	
-// 	target := min(len(TmpMemList), MASTERCOPYNUM)
-// 	if len(NewCopyList) < target {
-// 		for addr := range TmpMemList {
-// 			if !slices.Contains(SdfsClient.ReplicaAddr.StoreAddr, addr){
-// 				//TODO: send copy to such addr
-				
-// 				SdfsClient.ReplicaAddr.NumReplica += 1
-// 				NewCopyList.append(addr)
-// 			}
-// 			if SdfsClient.ReplicaAddr.NumReplica == target {
-// 				break
-// 			}
-// 		}
-// 	}
-// 	SdfsClient.ReplicaAddr.StoreAddr = NewCopyList
 
-// }
+
+
+// PeriodicalCheck
+// Only called by Master in SDFS, to check whether the replica node for global table still alive. If not, send copy to new replica node.
+func (sdfs *SDFSClient) PeriodicalCheck() {
+	TmpMemList := MySwimInstance.SwimGetPeer()
+	var NewCopyList	[]string
+	for _, addr := range sdfs.ReplicaAddr.StoreAddr {
+		if contains(TmpMemList, addr){
+			sdfs.ReplicaAddr.NumReplica -= 1
+		} else {
+			NewCopyList = append(NewCopyList, addr)
+		}
+	}
+	
+	target := min(len(TmpMemList), MASTERCOPYNUM)
+	if len(NewCopyList) < target {
+		for _, addr := range TmpMemList {
+			if !contains(sdfs.ReplicaAddr.StoreAddr, addr){
+				copyTable := sdfs.MasterTable
+				sdfs.SendTableCopy(addr, copyTable)
+				sdfs.ReplicaAddr.NumReplica += 1
+				NewCopyList = append(NewCopyList, addr)
+			}
+			if sdfs.ReplicaAddr.NumReplica == target {
+				break
+			}
+		}
+	}
+	sdfs.ReplicaAddr.StoreAddr = NewCopyList
+
+}
