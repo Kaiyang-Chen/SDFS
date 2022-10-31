@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 	"os"
+	"strings"
 )
 
 const MASTERCOPYNUM = 3
