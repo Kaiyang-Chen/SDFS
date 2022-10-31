@@ -7,12 +7,13 @@ import (
 	"sync"
 	"log"
 	"fmt"
-
+	"time"
+	"os"
 )
 
 const MASTERCOPYNUM = 3
 const COPYNUM = 4
-
+const PathPrefix = "/home/kc68/files/"
 // Type of message in sdfs
 const (
 	TARGETREQ = 0
@@ -62,6 +63,10 @@ func InitSDFS() {
 		go SdfsClient.PeriodicalCheck()
 		
 	}
+	_, err := os.Stat(PathPrefix)
+    if err != nil {
+        os.Mkdir(PathPrefix, 0755)
+    }
 	go func() {
 		fmt.Println(config.MyConfig.GetSdfsAddr())
 		err := network.Listen(config.MyConfig.GetSdfsAddr(), HandleSdfsMessage)
@@ -96,30 +101,33 @@ func contains(s []string, e string) bool {
 // PeriodicalCheck
 // Only called by Master in SDFS, to check whether the replica node for global table still alive. If not, send copy to new replica node.
 func (sdfs *SDFSClient) PeriodicalCheck() {
-	TmpMemList := MySwimInstance.SwimGetPeer()
-	var NewCopyList	[]string
-	for _, addr := range sdfs.ReplicaAddr.StoreAddr {
-		if contains(TmpMemList, addr){
-			sdfs.ReplicaAddr.NumReplica -= 1
-		} else {
-			NewCopyList = append(NewCopyList, addr)
-		}
-	}
-	
-	target := min(len(TmpMemList), MASTERCOPYNUM)
-	if len(NewCopyList) < target {
-		for _, addr := range TmpMemList {
-			if !contains(sdfs.ReplicaAddr.StoreAddr, addr){
-				copyTable := sdfs.MasterTable
-				sdfs.SendTableCopy(addr, copyTable)
-				sdfs.ReplicaAddr.NumReplica += 1
+	for{
+		TmpMemList := MySwimInstance.SwimGetPeer()
+		var NewCopyList	[]string
+		for _, addr := range sdfs.ReplicaAddr.StoreAddr {
+			if contains(TmpMemList, addr){
+				sdfs.ReplicaAddr.NumReplica -= 1
+			} else {
 				NewCopyList = append(NewCopyList, addr)
 			}
-			if sdfs.ReplicaAddr.NumReplica == target {
-				break
+		}
+		
+		target := min(len(TmpMemList), MASTERCOPYNUM)
+		if len(NewCopyList) < target {
+			for _, addr := range TmpMemList {
+				if !contains(sdfs.ReplicaAddr.StoreAddr, addr){
+					copyTable := sdfs.MasterTable
+					sdfs.SendTableCopy(addr, copyTable)
+					sdfs.ReplicaAddr.NumReplica += 1
+					NewCopyList = append(NewCopyList, addr)
+				}
+				if sdfs.ReplicaAddr.NumReplica == target {
+					break
+				}
 			}
 		}
+		sdfs.ReplicaAddr.StoreAddr = NewCopyList
+		time.Sleep(2 * time.Second)
 	}
-	sdfs.ReplicaAddr.StoreAddr = NewCopyList
 
 }

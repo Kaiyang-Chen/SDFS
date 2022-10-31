@@ -109,7 +109,7 @@ func (sdfs *SDFSClient) ShowMasterTable() {
 }
 
 func (sdfs *SDFSClient) ShowResourceDistribution() {
-	for k, v := range sdfs.MasterTable {
+	for k, v := range sdfs.ResourceDistribution {
 		fmt.Printf("Storage node: %s\n", k)
 		fmt.Printf("Stored file : ")
 		for _, add := range v.StoreAddr{

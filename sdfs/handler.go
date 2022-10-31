@@ -11,7 +11,7 @@ import(
 	"CS425MP2/config"
 )
 
-const pathPrefix = "/home/kc68/files/"
+
 
 func HandleSdfsMessage(request []byte) (string, []byte) {
 	var message FileMessage
@@ -44,7 +44,7 @@ func (sdfs *SDFSClient) HandleFileSent(message FileMessage) (string, []byte){
 	sdfs.LocalMutex.Lock()
 	defer sdfs.LocalMutex.Unlock()
 	sdfs.LocalTable[message.FileName] = FileAddr{len(message.ReplicaAddr), message.ReplicaAddr}
-	return pathPrefix + message.FileName, nil
+	return PathPrefix + message.FileName, nil
 
 }
 
