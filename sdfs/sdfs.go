@@ -23,6 +23,7 @@ const (
 	FILESENTACK = 3
 	MASTERUPDATE = 4
 	ACKOWLEDGE = 5
+	SENTFILEREQ = 6
 )
 
 type FileAddr struct {
@@ -61,7 +62,7 @@ func InitSDFS() {
 	SdfsClient.ReplicaAddr.NumReplica = 0
 	SdfsClient.ResourceDistribution = make(map[string]FileAddr)
 	if config.MyConfig.IsIntroducer() {
-		go SdfsClient.PeriodicalCheck()
+		go SdfsClient.PeriodicalCheckMaster()
 		
 	}
 	_, err := os.Stat(PathPrefix)
@@ -96,12 +97,65 @@ func contains(s []string, e string) bool {
 }
 
 
+// PeriodicalCheckResource
+// Only called by Master in SDFS, to check whether the replica number for file is sufficient. If not, send file copy to new replica node.
+func (sdfs *SDFSClient) PeriodicalCheckResource() {
+	for {
+		TmpMemList := sdfs.ResourceDistribution
+		target := min(len(TmpMemList), COPYNUM)
+		for k, v := range sdfs.MasterTable{
+			if v.NumReplica < target {
+				potentialAddr := sdfs.allocateAddr(target)
+				var newAddrs []string
+				for _, tmpAddr := range potentialAddr{
+					if !contains(v.StoreAddr, tmpAddr) {
+						newAddrs = append(newAddrs, tmpAddr)
+					}
+					if v.NumReplica + len(newAddrs) == target {
+						break
+					}
+				}
+				fileNodes := v.StoreAddr
+				sdfs.MasterMutex.Lock()
+				if entry, ok := sdfs.MasterTable[k]; ok {
+					entry.NumReplica = target
+					for _, tmp := range newAddrs {
+						entry.StoreAddr = append(entry.StoreAddr, tmp)
+					}
+					sdfs.MasterTable[k] = entry
+				}
+				sdfs.MasterMutex.Unlock()
+				for _ , addr:= range newAddrs {
+					for _, fileAddr := range fileNodes{
+						fmt.Printf("call %s to sent file %s to %s.\n", fileAddr, k, addr)
+						err := sdfs.SendFileReq(fileAddr, k, addr, sdfs.MasterTable[k].StoreAddr)
+						if err == nil {
+							sdfs.ResourceMutex.Lock()
+							if entry, ok := sdfs.ResourceDistribution[addr]; ok {
+								entry.NumReplica = entry.NumReplica + 1
+								entry.StoreAddr = append(entry.StoreAddr, k)
+								sdfs.ResourceDistribution[addr] = entry
+							}
+							sdfs.ResourceMutex.Unlock()
+							log.Printf("Peiroodical check: Send file Copy %s to node %s.\n",k,addr)
+							fmt.Printf("Peiroodical check: Send file Copy %s to node %s.\n",k,addr)
+							break
+						}
+					}
+				}
+			}
+		}
 
 
 
-// PeriodicalCheck
+		time.Sleep(5 * time.Second)
+	}
+}
+
+
+// PeriodicalCheckMaster
 // Only called by Master in SDFS, to check whether the replica node for global table still alive. If not, send copy to new replica node.
-func (sdfs *SDFSClient) PeriodicalCheck() {
+func (sdfs *SDFSClient) PeriodicalCheckMaster() {
 	for{
 		TmpMemList := MySwimInstance.SwimGetPeer()
 		var NewCopyList	[]string
@@ -133,7 +187,7 @@ func (sdfs *SDFSClient) PeriodicalCheck() {
 			copyTable := sdfs.MasterTable
 			sdfs.SendTableCopy(addr, copyTable)
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 }

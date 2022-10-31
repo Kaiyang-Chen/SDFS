@@ -5,7 +5,7 @@ import(
 	"log"
 	// "os"
 	"sync"
-	// "fmt"
+	"fmt"
 	"sort"
 	"strings"
 	"CS425MP2/config"
@@ -30,6 +30,8 @@ func HandleSdfsMessage(request []byte) (string, []byte) {
 		reply, err = SdfsClient.HandleTargetReq(message);
 	}else if message.MessageType == MASTERUPDATE{
 		reply, err = SdfsClient.HandleMasterUpdate(message);
+	}else if message.MessageType == SENTFILEREQ{
+		reply, err = SdfsClient.HandleFileSentReq(message);
 	}
 	
 	jsonReply, err := json.Marshal(reply)
@@ -41,6 +43,7 @@ func HandleSdfsMessage(request []byte) (string, []byte) {
 
 func (sdfs *SDFSClient) HandleFileSent(message FileMessage) (string, []byte){
 	log.Printf("[HandleFileSent]: message=%v", message)
+	fmt.Printf("[HandleFileSent]: message=%v", message)
 	sdfs.LocalMutex.Lock()
 	defer sdfs.LocalMutex.Unlock()
 	sdfs.LocalTable[message.FileName] = FileAddr{len(message.ReplicaAddr), message.ReplicaAddr}
@@ -50,9 +53,9 @@ func (sdfs *SDFSClient) HandleFileSent(message FileMessage) (string, []byte){
 
 
 
-func (sdfs *SDFSClient) allocateAddr() []string{
+func (sdfs *SDFSClient) allocateAddr(num int) []string{
 	var addrs []string
-	if len(sdfs.ResourceDistribution) < COPYNUM {
+	if len(sdfs.ResourceDistribution) < num {
 		for k := range sdfs.ResourceDistribution {
 			addrs = append(addrs, k)
 		}
@@ -63,10 +66,24 @@ func (sdfs *SDFSClient) allocateAddr() []string{
 			keys = append(keys, k)
 		}
 		sort.Slice(keys, func(i, j int) bool { return sdfs.ResourceDistribution[keys[i]].NumReplica < sdfs.ResourceDistribution[keys[j]].NumReplica })
-		addrs = keys[:COPYNUM]
+		addrs = keys[:num]
 	}
 	return addrs
 }
+
+
+func (sdfs *SDFSClient) HandleFileSentReq(message FileMessage) (FileMessage, error) {
+	log.Printf("[HandleFileSentReq]: message=%v", message)
+	fmt.Printf("[HandleFileSentReq]: message=%v", message)
+	success := make(chan bool, 1)
+	reply, err := sdfs.SendFile(message.TargetAddr, PathPrefix+message.FileName, message.FileName, &success, message.ReplicaAddr)
+	ok := <- success
+	if err != nil || !ok{
+		log.Println(err)
+	}
+	return reply, err
+}
+
 
 func (sdfs *SDFSClient)HandleTargetReq(message FileMessage) (FileMessage, error){
 	log.Printf("[HandleTargetReq]: message=%v", message)
@@ -75,7 +92,7 @@ func (sdfs *SDFSClient)HandleTargetReq(message FileMessage) (FileMessage, error)
 	var reply FileMessage
 	_, exist := sdfs.MasterTable[message.FileName]
 	if !exist {
-		addrs := sdfs.allocateAddr()
+		addrs := sdfs.allocateAddr(COPYNUM)
 		sdfs.MasterTable[message.FileName] = FileAddr{len(addrs), addrs}
 		sdfs.ResourceMutex.Lock()
 		defer sdfs.ResourceMutex.Unlock()
@@ -91,9 +108,6 @@ func (sdfs *SDFSClient)HandleTargetReq(message FileMessage) (FileMessage, error)
 		wg.Add(len(sdfs.ReplicaAddr.StoreAddr))
 		for _, addr := range sdfs.ReplicaAddr.StoreAddr {
 			go func(address string) {
-				// key := message.FileName
-				// value := sdfs.MasterTable[message.FileName]
-				// tmp := map[string]FileAddr{key:value}
 				sdfs.SendTableCopy(address, sdfs.MasterTable)
 				wg.Done()
 			}(addr)
@@ -118,9 +132,6 @@ func (sdfs *SDFSClient)HandleMasterUpdate(message FileMessage) (FileMessage, err
 	log.Printf("[HandleMasterUpdate]: message=%v", message)
 	sdfs.MasterMutex.Lock()
 	defer sdfs.MasterMutex.Unlock()
-	// for f, addr := range message.CopyTable {
-	// 	sdfs.MasterTable[f] = addr
-	// }
 	sdfs.MasterTable = message.CopyTable
 	reply := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),

@@ -21,6 +21,7 @@ func (sdfs *SDFSClient) SendMessage(request FileMessage, host string, filePath s
 }
 
 func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, success *chan bool, repAddr []string) (FileMessage, error){
+	fmt.Printf("Sending file %s.\n", sdfsName)
 	message := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: FILESENT,
@@ -37,6 +38,19 @@ func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, s
 	}
 	return reply, err
 
+}
+
+func(sdfs *SDFSClient) SendFileReq(fileNode string, sdfsName string, targetAddr string, repAddr []string) error {
+	message := FileMessage{
+		SenderAddr:  config.MyConfig.GetSdfsAddr(),
+		MessageType: SENTFILEREQ,
+		TargetAddr:  targetAddr,
+		FileName: 	 sdfsName,
+		ReplicaAddr: repAddr,
+		CopyTable:	nil,
+	}
+	_, err := sdfs.SendMessage(message, fileNode, "", "")
+	return err
 }
 
 func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
