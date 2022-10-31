@@ -141,9 +141,13 @@ func(sdfs *SDFSClient) HandleJoin(addr string){
 
 
 func (sdfs *SDFSClient)HandleLeaving(addr string){
-	sdfs.ResourceMutex.Lock()
-	delete(sdfs.ResourceDistribution, addr)
-	sdfs.ResourceMutex.Unlock()
+	// TODO: only leader delete this
+	if config.MyConfig.IsIntroducer(){
+		sdfs.ResourceMutex.Lock()
+		sdfsAddr := strings.Split(addr, ":")[0] + ":" + "8889"
+		delete(sdfs.ResourceDistribution, sdfsAddr)
+		sdfs.ResourceMutex.Unlock()
+	}
 	sdfs.MasterMutex.Lock()
 	defer sdfs.MasterMutex.Unlock()
 	for _, v := range sdfs.MasterTable {

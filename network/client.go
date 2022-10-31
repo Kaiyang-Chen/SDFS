@@ -70,7 +70,7 @@ func SendFile(path string, conn* net.UDPConn) ([]byte, int, error) {
 	buf := make([]byte, 4096)
 	for {
 	   	n, err := f.Read(buf)     
-		fmt.Println(n)   
+		// fmt.Println(n)   
 	   	if err != nil {
 		  	if err == io.EOF {
 			 	log.Println("file read done: ", path)

@@ -15,7 +15,7 @@ func (sdfs *SDFSClient) SendMessage(request FileMessage, host string, filePath s
 	response, err := network.SdfsDial(host, filePath, sdfsName, jsonData)
 	replyMessage := FileMessage{}
 	if err == nil {
-		err = json.Unmarshal(response, &replyMessage)
+		json.Unmarshal(response, &replyMessage)
 	}
 	return replyMessage, err
 }

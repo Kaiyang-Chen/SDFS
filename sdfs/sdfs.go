@@ -115,11 +115,12 @@ func (sdfs *SDFSClient) PeriodicalCheck() {
 		target := min(len(TmpMemList), MASTERCOPYNUM)
 		if len(NewCopyList) < target {
 			for _, addr := range TmpMemList {
-				if !contains(sdfs.ReplicaAddr.StoreAddr, addr){
+				sdfsAddr := strings.Split(addr, ":")[0] + ":" + "8889"
+				if !contains(sdfs.ReplicaAddr.StoreAddr, sdfsAddr){
 					copyTable := sdfs.MasterTable
-					sdfs.SendTableCopy(addr, copyTable)
+					sdfs.SendTableCopy(sdfsAddr, copyTable)
 					sdfs.ReplicaAddr.NumReplica += 1
-					NewCopyList = append(NewCopyList, addr)
+					NewCopyList = append(NewCopyList, sdfsAddr)
 				}
 				if sdfs.ReplicaAddr.NumReplica == target {
 					break
