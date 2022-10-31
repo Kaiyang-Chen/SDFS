@@ -55,7 +55,7 @@ func(sdfs *SDFSClient) SendFileReq(fileNode string, sdfsName string, targetAddr 
 
 
 func(sdfs *SDFSClient) GetFile(filePath string, sdfsName string) error{
-	var LocalFilePath map[string]FileAddr // to store the local file path 
+	LocalFilePath := make(map[string]FileAddr) // to store the local file path 
 	LocalFilePath[filePath] = FileAddr{}
 	message := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
