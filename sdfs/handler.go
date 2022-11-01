@@ -10,6 +10,7 @@ import(
 	"sort"
 	"strings"
 	"CS425MP2/config"
+	"errors"
 )
 
 
@@ -33,6 +34,12 @@ func HandleSdfsMessage(request []byte) (string, []byte) {
 		reply, err = SdfsClient.HandleMasterUpdate(message);
 	}else if message.MessageType == SENTFILEREQ{
 		reply, err = SdfsClient.HandleFileSentReq(message);
+	}else if message.MessageType == GETFILEREQ{
+		reply, err = SdfsClient.HandleGetFileReq(message);
+	}else if message.MessageType == FILEDELETEREQ{
+		reply, err = SdfsClient.HandleDeleteFileReq(message);
+	}else if message.MessageType == FILEDELETE{
+		reply, err = SdfsClient.HandleDeleteFile(message);
 	}
 	
 	jsonReply, err := json.Marshal(reply)
@@ -84,6 +91,82 @@ func (sdfs *SDFSClient) allocateAddr(num int) []string{
 		addrs = keys[:num]
 	}
 	return addrs
+}
+
+
+func(sdfs *SDFSClient) HandleDeleteFile(message FileMessage) (FileMessage, error) {
+	log.Printf("[HandleDeleteFile]: message=%v", message)
+	fmt.Printf("[HandleDeleteFile]: message=%v", message)
+	sdfs.LocalMutex.Lock()
+	defer sdfs.LocalMutex.Unlock()
+	delete(sdfs.LocalTable, message.FileName)
+	var reply FileMessage
+	reply = FileMessage{
+		SenderAddr:  config.MyConfig.GetSdfsAddr(),
+		MessageType: ACKOWLEDGE,
+		TargetAddr:  "",
+		FileName: 	 message.FileName,
+		ReplicaAddr: nil,
+		CopyTable:	nil,
+	}
+	return reply, nil
+}
+
+
+func(sdfs *SDFSClient) HandleDeleteFileReq(message FileMessage) (FileMessage, error){
+	log.Printf("[HandleGetFileReq]: message=%v", message)
+	fmt.Printf("[HandleGetFileReq]: message=%v", message)
+	success := make(chan bool, sdfs.MasterTable[message.FileName].NumReplica)
+	for _, addr := range sdfs.MasterTable[message.FileName].StoreAddr {
+		go sdfs.DeleteFile(message.FileName, addr, &success)
+	}
+	ok := true
+	for i := 0; i < sdfs.MasterTable[message.FileName].NumReplica; i++ {
+		result := <-success
+		ok = ok && result
+	}
+	var err error
+	if !ok {
+		err = errors.New("something didn't work")
+		log.Println("Failed Deleting file\n")
+		fmt.Println("Failed Deleting file\n")
+	} else {
+		victim := sdfs.MasterTable[message.FileName].StoreAddr
+		sdfs.MasterMutex.Lock()
+		delete(sdfs.MasterTable, message.FileName)
+		sdfs.MasterMutex.Unlock()
+		sdfs.ResourceMutex.Lock()
+		for _, addr := range victim {
+			idx := -1
+			for k, v := range sdfs.ResourceDistribution[addr].StoreAddr{
+				if v == message.FileName {
+					idx = k
+				}
+			}
+			if idx >= 0 {
+				if entry, ok := sdfs.ResourceDistribution[addr]; ok {
+					tmp := entry.StoreAddr
+					tmp[idx] = tmp[len(entry.StoreAddr)-1]
+					entry.StoreAddr = tmp[:entry.NumReplica-1]
+					entry.NumReplica = entry.NumReplica-1
+					sdfs.ResourceDistribution[addr] = entry
+				}
+			}
+		}
+		sdfs.ResourceMutex.Unlock()
+		log.Println("Succeed Deleting file\n")
+		fmt.Println("Succeed Deleting file\n")
+	}
+	var reply FileMessage
+	reply = FileMessage{
+		SenderAddr:  config.MyConfig.GetSdfsAddr(),
+		MessageType: ACKOWLEDGE,
+		TargetAddr:  "",
+		FileName: 	 message.FileName,
+		ReplicaAddr: nil,
+		CopyTable:	nil,
+	}
+	return reply, err
 }
 
 

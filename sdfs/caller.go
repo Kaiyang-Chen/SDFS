@@ -73,6 +73,42 @@ func(sdfs *SDFSClient) GetFile(filePath string, sdfsName string) error{
 }
 
 
+func(sdfs *SDFSClient) DeleteFile(sdfsName string, address string, success *chan bool) (FileMessage, error) {
+	message := FileMessage{
+		SenderAddr:  config.MyConfig.GetSdfsAddr(),
+		MessageType: FILEDELETE,
+		TargetAddr:  address,
+		FileName: 	 sdfsName,
+		ReplicaAddr: nil,
+		CopyTable:	nil,
+	}
+	reply, err := sdfs.SendMessage(message, address, "", "")
+	if err != nil {
+		*success <- false
+	} else {
+		*success <- true
+	}
+	return reply, err
+}
+
+
+func(sdfs *SDFSClient) DeleteFileReq(sdfsName string) error {
+	message := FileMessage{
+		SenderAddr:  config.MyConfig.GetSdfsAddr(),
+		MessageType: FILEDELETEREQ,
+		TargetAddr:  config.MyConfig.GetLeaderAddr(),
+		FileName: 	 sdfsName,
+		ReplicaAddr: nil,
+		CopyTable:	nil,
+	}
+	_, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
+	if err != nil {
+		log.Println(err)
+	}
+	return err
+}
+
+
 func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 	log.Println("Put file!\n")
 	message := FileMessage{

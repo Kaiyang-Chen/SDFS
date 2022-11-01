@@ -25,6 +25,8 @@ const (
 	ACKOWLEDGE = 5
 	SENTFILEREQ = 6
 	GETFILEREQ = 7
+	FILEDELETEREQ = 8
+	FILEDELETE = 9
 )
 
 type FileAddr struct {
