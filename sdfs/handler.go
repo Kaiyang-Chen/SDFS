@@ -40,6 +40,8 @@ func HandleSdfsMessage(request []byte) (string, []byte) {
 		reply, err = SdfsClient.HandleDeleteFileReq(message);
 	}else if message.MessageType == FILEDELETE{
 		reply, err = SdfsClient.HandleDeleteFile(message);
+	}else if message.MessageType == LISTFILE{
+		reply, err = SdfsClient.HandleListFile(message);
 	}
 	
 	jsonReply, err := json.Marshal(reply)
@@ -113,9 +115,49 @@ func(sdfs *SDFSClient) HandleDeleteFile(message FileMessage) (FileMessage, error
 }
 
 
+func(sdfs *SDFSClient) HandleListFile(message FileMessage) (FileMessage, error){
+	log.Printf("[HandleListFile]: message=%v", message)
+	fmt.Printf("[HandleListFile]: message=%v", message)
+	var reply FileMessage
+	if _, ok := sdfs.MasterTable[message.FileName]; !ok {
+		reply = FileMessage{
+			SenderAddr:  config.MyConfig.GetSdfsAddr(),
+			MessageType: ACKOWLEDGE,
+			TargetAddr:  "",
+			FileName: 	 "",
+			ReplicaAddr: nil,
+			CopyTable:	nil,
+		}
+		
+	} else {
+		reply = FileMessage{
+			SenderAddr:  config.MyConfig.GetSdfsAddr(),
+			MessageType: ACKOWLEDGE,
+			TargetAddr:  "",
+			FileName: 	 message.FileName,
+			ReplicaAddr: sdfs.MasterTable[message.FileName].StoreAddr,
+			CopyTable:	nil,
+		}
+	}
+	return reply, nil
+}
+
+
 func(sdfs *SDFSClient) HandleDeleteFileReq(message FileMessage) (FileMessage, error){
 	log.Printf("[HandleGetFileReq]: message=%v", message)
 	fmt.Printf("[HandleGetFileReq]: message=%v", message)
+	var reply FileMessage
+	if _, ok := sdfs.MasterTable[message.FileName]; !ok {
+		reply = FileMessage{
+			SenderAddr:  config.MyConfig.GetSdfsAddr(),
+			MessageType: ACKOWLEDGE,
+			TargetAddr:  "",
+			FileName: 	 "",
+			ReplicaAddr: nil,
+			CopyTable:	nil,
+		}
+		return reply, nil
+	}
 	success := make(chan bool, sdfs.MasterTable[message.FileName].NumReplica)
 	for _, addr := range sdfs.MasterTable[message.FileName].StoreAddr {
 		go sdfs.DeleteFile(message.FileName, addr, &success)
@@ -157,7 +199,6 @@ func(sdfs *SDFSClient) HandleDeleteFileReq(message FileMessage) (FileMessage, er
 		log.Println("Succeed Deleting file\n")
 		fmt.Println("Succeed Deleting file\n")
 	}
-	var reply FileMessage
 	reply = FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: ACKOWLEDGE,

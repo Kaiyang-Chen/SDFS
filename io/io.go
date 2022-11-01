@@ -45,6 +45,10 @@ func Handle_IO() {
 			tmp := strings.Split(input, " ")
 			Sdfs.SdfsClient.DeleteFileReq(tmp[1])
 		}
+		if strings.Contains(input, "ls"){
+			tmp := strings.Split(input, " ")
+			Sdfs.SdfsClient.ListFileReq(tmp[1])
+		}
 		if strings.Contains(input, "put") {
 			fmt.Printf("putting \n")
 			tmp := strings.Split(input, " ")

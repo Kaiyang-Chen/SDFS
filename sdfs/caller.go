@@ -92,6 +92,34 @@ func(sdfs *SDFSClient) DeleteFile(sdfsName string, address string, success *chan
 }
 
 
+func(sdfs *SDFSClient) ListFileReq(sdfsName string) error {
+	message := FileMessage{
+		SenderAddr:  config.MyConfig.GetSdfsAddr(),
+		MessageType: LISTFILE,
+		TargetAddr:  config.MyConfig.GetLeaderAddr(),
+		FileName: 	 sdfsName,
+		ReplicaAddr: nil,
+		CopyTable:	nil,
+	}
+	reply, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
+
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	if reply.FileName == "" {
+		fmt.Printf("No such file in sdfs!\n")
+	} else {
+		fmt.Printf("File %s stored at :", sdfsName)
+		for _ , v := range reply.ReplicaAddr {
+			fmt.Printf(" %s ", v)
+		}
+		fmt.Printf("\n")
+	}
+	return err
+}
+
+
 func(sdfs *SDFSClient) DeleteFileReq(sdfsName string) error {
 	message := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
@@ -101,9 +129,12 @@ func(sdfs *SDFSClient) DeleteFileReq(sdfsName string) error {
 		ReplicaAddr: nil,
 		CopyTable:	nil,
 	}
-	_, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
+	reply, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
 	if err != nil {
 		log.Println(err)
+	}
+	if reply.FileName == "" {
+		fmt.Printf("No such file in sdfs!\n")
 	}
 	return err
 }

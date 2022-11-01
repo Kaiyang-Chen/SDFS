@@ -27,6 +27,7 @@ const (
 	GETFILEREQ = 7
 	FILEDELETEREQ = 8
 	FILEDELETE = 9
+	LISTFILE = 10
 )
 
 type FileAddr struct {
