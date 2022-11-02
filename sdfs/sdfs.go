@@ -43,6 +43,12 @@ type FileMessage struct {
 	FileName	string
 	ReplicaAddr []string
 	CopyTable	map[string]FileAddr
+	ActionID	int
+}
+
+type FileInfo struct {
+	FileName	string
+	IncarnationID	int
 }
 
 
@@ -51,10 +57,14 @@ type SDFSClient struct {
 	MasterTable	map[string]FileAddr
 	LocalTable	map[string]FileAddr
 	ResourceDistribution	map[string]FileAddr
+	VersionTable 	map[string][]FileInfo
+	MasterIncarnationID		int
 	ReplicaAddr	FileAddr
 	MasterMutex  sync.RWMutex
 	LocalMutex	sync.RWMutex
 	ResourceMutex	sync.RWMutex
+	IDMutex		sync.RWMutex
+	VersionMutex	sync.RWMutex
 }
 
 var SdfsClient SDFSClient
@@ -63,6 +73,8 @@ func InitSDFS() {
 	fmt.Printf("init sdfs\n")
 	SdfsClient.MasterTable = make(map[string]FileAddr)
 	SdfsClient.LocalTable = make(map[string]FileAddr)
+	SdfsClient.VersionTable = make(map[string][]FileInfo)
+	SdfsClient.MasterIncarnationID = 0
 	SdfsClient.ReplicaAddr.NumReplica = 0
 	SdfsClient.ResourceDistribution = make(map[string]FileAddr)
 	if config.MyConfig.IsIntroducer() {
@@ -134,7 +146,7 @@ func (sdfs *SDFSClient) PeriodicalCheckResource() {
 				for _ , addr:= range newAddrs {
 					for _, fileAddr := range fileNodes{
 						fmt.Printf("call %s to sent file %s to %s.\n", fileAddr, k, addr)
-						err := sdfs.SendFileReq(fileAddr, k, addr, sdfs.MasterTable[k].StoreAddr, nil)
+						err := sdfs.SendFileReq(fileAddr, k, addr, sdfs.MasterTable[k].StoreAddr, nil, sdfs.MasterIncarnationID)
 						if err == nil {
 							sdfs.ResourceMutex.Lock()
 							if entry, ok := sdfs.ResourceDistribution[addr]; ok {
@@ -194,4 +206,10 @@ func (sdfs *SDFSClient) PeriodicalCheckMaster() {
 		time.Sleep(1 * time.Second)
 	}
 
+}
+
+func (sdfs *SDFSClient) IncreaseIncarnationID(){
+	sdfs.IDMutex.Lock()
+	defer sdfs.IDMutex.Unlock()
+	sdfs.MasterIncarnationID =  sdfs.MasterIncarnationID + 1
 }

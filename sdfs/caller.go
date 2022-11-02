@@ -20,7 +20,7 @@ func (sdfs *SDFSClient) SendMessage(request FileMessage, host string, filePath s
 	return replyMessage, err
 }
 
-func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, success *chan bool, repAddr []string, copyTable map[string]FileAddr) (FileMessage, error){
+func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, success *chan bool, repAddr []string, copyTable map[string]FileAddr, IncarID int) (FileMessage, error){
 	fmt.Printf("Sending file %s.\n", sdfsName)
 	message := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
@@ -29,6 +29,7 @@ func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, s
 		FileName: 	 sdfsName,
 		ReplicaAddr: repAddr,
 		CopyTable:	copyTable,
+		ActionID: 	IncarID,
 	}
 	reply, err := sdfs.SendMessage(message, host, filePath, sdfsName)
 	if err != nil {
@@ -40,7 +41,7 @@ func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, s
 
 }
 
-func(sdfs *SDFSClient) SendFileReq(fileNode string, sdfsName string, targetAddr string, repAddr []string, copyTable map[string]FileAddr) error {
+func(sdfs *SDFSClient) SendFileReq(fileNode string, sdfsName string, targetAddr string, repAddr []string, copyTable map[string]FileAddr, IncarID int) error {
 	message := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: SENTFILEREQ,
@@ -48,6 +49,7 @@ func(sdfs *SDFSClient) SendFileReq(fileNode string, sdfsName string, targetAddr 
 		FileName: 	 sdfsName,
 		ReplicaAddr: repAddr,
 		CopyTable:	copyTable,
+		ActionID:	IncarID,
 	}
 	_, err := sdfs.SendMessage(message, fileNode, "", "")
 	return err
@@ -64,6 +66,7 @@ func(sdfs *SDFSClient) GetFile(filePath string, sdfsName string) error{
 		FileName: 	 sdfsName,
 		ReplicaAddr: nil,
 		CopyTable:	LocalFilePath,
+		ActionID:	0,
 	}
 	_, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
 	if err != nil {
@@ -73,7 +76,7 @@ func(sdfs *SDFSClient) GetFile(filePath string, sdfsName string) error{
 }
 
 
-func(sdfs *SDFSClient) DeleteFile(sdfsName string, address string, success *chan bool) (FileMessage, error) {
+func(sdfs *SDFSClient) DeleteFile(sdfsName string, address string, success *chan bool, IncarID int) (FileMessage, error) {
 	message := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: FILEDELETE,
@@ -81,6 +84,7 @@ func(sdfs *SDFSClient) DeleteFile(sdfsName string, address string, success *chan
 		FileName: 	 sdfsName,
 		ReplicaAddr: nil,
 		CopyTable:	nil,
+		ActionID:	IncarID,
 	}
 	reply, err := sdfs.SendMessage(message, address, "", "")
 	if err != nil {
@@ -100,6 +104,7 @@ func(sdfs *SDFSClient) ListFileReq(sdfsName string) error {
 		FileName: 	 sdfsName,
 		ReplicaAddr: nil,
 		CopyTable:	nil,
+		ActionID:	0,
 	}
 	reply, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
 
@@ -128,6 +133,7 @@ func(sdfs *SDFSClient) DeleteFileReq(sdfsName string) error {
 		FileName: 	 sdfsName,
 		ReplicaAddr: nil,
 		CopyTable:	nil,
+		ActionID:	0,
 	}
 	reply, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
 	if err != nil {
@@ -149,6 +155,7 @@ func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 		FileName: 	 sdfsName,
 		ReplicaAddr: nil,
 		CopyTable:	nil,
+		ActionID:	0,
 	}
 	reply, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", sdfsName)
 
@@ -158,7 +165,7 @@ func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 	}
 	success := make(chan bool, len(reply.ReplicaAddr))
 	for _, addr := range reply.ReplicaAddr {
-		go sdfs.SendFile(addr, filePath, sdfsName, &success, reply.ReplicaAddr, nil)
+		go sdfs.SendFile(addr, filePath, sdfsName, &success, reply.ReplicaAddr, nil, reply.ActionID)
 	}
 	ok := false
 	for i := 0; i < len(reply.ReplicaAddr); i++ {
@@ -186,6 +193,7 @@ func (sdfs *SDFSClient) SendTableCopy(host string, table map[string]FileAddr)  {
 		FileName: 	 "",
 		ReplicaAddr: nil,
 		CopyTable:	table,
+		ActionID: 	sdfs.MasterIncarnationID,
 	}
 	sdfs.SendMessage(message, host, "", "")
 
@@ -215,6 +223,17 @@ func (sdfs *SDFSClient) ShowResourceDistribution() {
 		fmt.Printf("Stored file : ")
 		for _, add := range v.StoreAddr{
 			fmt.Printf("%s ", add)
+		}
+		fmt.Printf("\n")
+	}
+}
+
+func (sdfs *SDFSClient) ShowVersionTable() {
+	for k, v := range sdfs.VersionTable {
+		fmt.Printf("Filename: %s\n", k)
+		fmt.Printf("Stored file : ")
+		for _, i := range v{
+			fmt.Printf("%s ", i.FileName)
 		}
 		fmt.Printf("\n")
 	}

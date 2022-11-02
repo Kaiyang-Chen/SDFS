@@ -37,6 +37,9 @@ func Handle_IO() {
 		if strings.Compare("resource", input) == 0 {
 			Sdfs.SdfsClient.ShowResourceDistribution()
 		}
+		if strings.Compare("version", input) == 0 {
+			Sdfs.SdfsClient.ShowVersionTable()
+		}
 		if strings.Contains(input, "get"){
 			tmp := strings.Split(input, " ")
 			Sdfs.SdfsClient.GetFile(tmp[2], tmp[1])
