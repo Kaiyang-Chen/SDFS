@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 	"sync"
-	// "bufio"
+	"bufio"
 )
 
 func Listen(address string, messageHandler func([]byte) (bool, string, []byte)) error {
@@ -72,15 +72,13 @@ func Listen(address string, messageHandler func([]byte) (bool, string, []byte)) 
 func RecvFile(fileName string, conn *net.UDPConn, flag bool) {
 	var f *os.File
 	var err error
-	// flag := true
-	// if flag {
-	// 	f, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
-	// 	write := bufio.NewWriter(f)
-	// 	write.WriteString("--------------------------------------------------------- \n")
-	// }else{
-	// 	f, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
-	// }
-	f, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
+	if flag {
+		f, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
+		write := bufio.NewWriter(f)
+		write.WriteString("--------------------------------------------------------- \n")
+	}else{
+		f, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
+	}
 	// f, err := os.Create(fileName)
 	if err != nil {
 		log.Println("Create err:", err)
