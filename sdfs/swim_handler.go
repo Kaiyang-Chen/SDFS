@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func HandleMessage(request []byte) (string, []byte) {
+func HandleMessage(request []byte) (bool, string, []byte) {
 	var message Message
 	err := json.Unmarshal(request, &message)
 	if err != nil {
@@ -25,7 +25,7 @@ func HandleMessage(request []byte) (string, []byte) {
 		if err != nil {
 			log.Println("[Marshal]: ", err)
 		}
-		return "", jsonReply
+		return false, "", jsonReply
 	}
 
 	if message.MessageType == PING {
@@ -43,7 +43,7 @@ func HandleMessage(request []byte) (string, []byte) {
 	if err != nil {
 		log.Println("[Marshal]: ", err)
 	}
-	return "", jsonReply
+	return false, "", jsonReply
 }
 
 func (swim *SWIM) HandleJOIN(message Message) (Message, error) {

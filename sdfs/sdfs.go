@@ -28,6 +28,7 @@ const (
 	FILEDELETEREQ = 8
 	FILEDELETE = 9
 	LISTFILE = 10
+	GETVFILEREQ = 11
 )
 
 type FileAddr struct {
@@ -44,11 +45,26 @@ type FileMessage struct {
 	ReplicaAddr []string
 	CopyTable	map[string]FileAddr
 	ActionID	int
+	NumVersion	int
 }
 
 type FileInfo struct {
 	FileName	string
 	IncarnationID	int
+}
+
+type FileVersion []FileInfo
+
+func(f FileVersion) Len() int {
+	return len(f)
+}
+
+func(f FileVersion) Swap(i, j int) {
+	f[i], f[j] = f[j], f[i]
+}
+
+func(f FileVersion) Less(i, j int) bool {
+	return f[i].IncarnationID > f[j].IncarnationID
 }
 
 
@@ -146,7 +162,7 @@ func (sdfs *SDFSClient) PeriodicalCheckResource() {
 				for _ , addr:= range newAddrs {
 					for _, fileAddr := range fileNodes{
 						fmt.Printf("call %s to sent file %s to %s.\n", fileAddr, k, addr)
-						err := sdfs.SendFileReq(fileAddr, k, addr, sdfs.MasterTable[k].StoreAddr, nil, sdfs.MasterIncarnationID)
+						err := sdfs.SendFileReq(fileAddr, k, addr, sdfs.MasterTable[k].StoreAddr, nil, sdfs.MasterIncarnationID, 1)
 						if err == nil {
 							sdfs.ResourceMutex.Lock()
 							if entry, ok := sdfs.ResourceDistribution[addr]; ok {

@@ -16,7 +16,7 @@ import(
 
 
 
-func HandleSdfsMessage(request []byte) (string, []byte) {
+func HandleSdfsMessage(request []byte) (bool, string, []byte) {
 	var message FileMessage
 	err := json.Unmarshal(request, &message)
 	if err != nil {
@@ -47,16 +47,20 @@ func HandleSdfsMessage(request []byte) (string, []byte) {
 	}else if message.MessageType == LISTFILE{
 		SdfsClient.IncreaseIncarnationID()
 		reply, err = SdfsClient.HandleListFile(message);
+	}else if message.MessageType == GETVFILEREQ{
+		SdfsClient.IncreaseIncarnationID()
+		reply, err = SdfsClient.HandleGetVersionsFileReq(message);
 	}
+	
 	
 	jsonReply, err := json.Marshal(reply)
 	if err != nil {
 		log.Println("[Marshal]: ", err)
 	}
-	return "", jsonReply
+	return false, "", jsonReply
 }
 
-func (sdfs *SDFSClient) HandleFileSent(message FileMessage) (string, []byte){
+func (sdfs *SDFSClient) HandleFileSent(message FileMessage) (bool, string, []byte){
 	log.Printf("[HandleFileSent]: message=%v", message)
 	fmt.Printf("[HandleFileSent]: message=%v", message)
 	if message.ReplicaAddr == nil {
@@ -69,7 +73,10 @@ func (sdfs *SDFSClient) HandleFileSent(message FileMessage) (string, []byte){
 		if err != nil {
 			os.Mkdir(dir, 0755)
 		}
-		return localFilePath, nil
+		if message.NumVersion == 1{
+			return true, localFilePath, nil
+		}
+		return false, localFilePath, nil
 	} else {
 		sdfs.LocalMutex.Lock()
 		defer sdfs.LocalMutex.Unlock()
@@ -78,7 +85,7 @@ func (sdfs *SDFSClient) HandleFileSent(message FileMessage) (string, []byte){
 		defer sdfs.VersionMutex.Unlock()
 		fileName := message.FileName + strconv.Itoa(message.ActionID)
 		sdfs.VersionTable[message.FileName] = append(sdfs.VersionTable[message.FileName],FileInfo{fileName, message.ActionID})
-		return PathPrefix + fileName, nil
+		return false, PathPrefix + fileName, nil
 	}
 	
 
@@ -123,6 +130,7 @@ func(sdfs *SDFSClient) HandleDeleteFile(message FileMessage) (FileMessage, error
 		ReplicaAddr: nil,
 		CopyTable:	nil,
 		ActionID:	message.ActionID,
+		NumVersion:	0,
 	}
 	return reply, nil
 }
@@ -141,6 +149,7 @@ func(sdfs *SDFSClient) HandleListFile(message FileMessage) (FileMessage, error){
 			ReplicaAddr: nil,
 			CopyTable:	nil,
 			ActionID:	sdfs.MasterIncarnationID,
+			NumVersion:	0,
 		}
 		
 	} else {
@@ -152,6 +161,7 @@ func(sdfs *SDFSClient) HandleListFile(message FileMessage) (FileMessage, error){
 			ReplicaAddr: sdfs.MasterTable[message.FileName].StoreAddr,
 			CopyTable:	nil,
 			ActionID:	sdfs.MasterIncarnationID,
+			NumVersion:	0,
 		}
 	}
 	return reply, nil
@@ -171,6 +181,7 @@ func(sdfs *SDFSClient) HandleDeleteFileReq(message FileMessage) (FileMessage, er
 			ReplicaAddr: nil,
 			CopyTable:	nil,
 			ActionID:	sdfs.MasterIncarnationID,
+			NumVersion:	0,
 		}
 		return reply, nil
 	}
@@ -204,7 +215,10 @@ func(sdfs *SDFSClient) HandleDeleteFileReq(message FileMessage) (FileMessage, er
 			if idx >= 0 {
 				if entry, ok := sdfs.ResourceDistribution[addr]; ok {
 					tmp := entry.StoreAddr
-					tmp[idx] = tmp[len(entry.StoreAddr)-1]
+					for i:=idx;  i < len(entry.StoreAddr)-1; i++ {
+						tmp[i] = tmp[i+1]
+					}
+					// tmp[idx] = tmp[len(entry.StoreAddr)-1]
 					entry.StoreAddr = tmp[:entry.NumReplica-1]
 					entry.NumReplica = entry.NumReplica-1
 					sdfs.ResourceDistribution[addr] = entry
@@ -227,6 +241,7 @@ func(sdfs *SDFSClient) HandleDeleteFileReq(message FileMessage) (FileMessage, er
 		ReplicaAddr: nil,
 		CopyTable:	nil,
 		ActionID: 	sdfs.MasterIncarnationID,
+		NumVersion:	0,
 	}
 	return reply, err
 }
@@ -238,7 +253,7 @@ func(sdfs *SDFSClient) HandleGetFileReq(message FileMessage) (FileMessage, error
 	var err error
 	// Future work: compare and return the newest version of file
 	for _, addr := range sdfs.MasterTable[message.FileName].StoreAddr {
-		err = sdfs.SendFileReq(addr, message.FileName, message.TargetAddr, message.ReplicaAddr, message.CopyTable, sdfs.MasterIncarnationID)
+		err = sdfs.SendFileReq(addr, message.FileName, message.TargetAddr, message.ReplicaAddr, message.CopyTable, sdfs.MasterIncarnationID, 1)
 		if err == nil {
 			break
 		}
@@ -252,28 +267,70 @@ func(sdfs *SDFSClient) HandleGetFileReq(message FileMessage) (FileMessage, error
 		ReplicaAddr: nil,
 		CopyTable:	nil,
 		ActionID: 	sdfs.MasterIncarnationID,
+		NumVersion:	0,
 	}
 	return reply, err
 }
 
 
+func(sdfs *SDFSClient) HandleGetVersionsFileReq(message FileMessage) (FileMessage, error) {
+	log.Printf("[HandleGetFileReq]: message=%v", message)
+	fmt.Printf("[HandleGetFileReq]: message=%v", message)
+	var err error
+	for _, addr := range sdfs.MasterTable[message.FileName].StoreAddr {
+		err = sdfs.SendFileReq(addr, message.FileName, message.TargetAddr, message.ReplicaAddr, message.CopyTable, sdfs.MasterIncarnationID, message.NumVersion)
+		if err == nil {
+			break
+		}
+	}
+	var reply FileMessage
+	reply = FileMessage{
+		SenderAddr:  config.MyConfig.GetSdfsAddr(),
+		MessageType: FILESENTACK,
+		TargetAddr:  "",
+		FileName: 	 message.FileName,
+		ReplicaAddr: nil,
+		CopyTable:	nil,
+		ActionID: 	sdfs.MasterIncarnationID,
+		NumVersion:	0,
+	}
+	return reply, err
+}
+
+
+
 func (sdfs *SDFSClient) HandleFileSentReq(message FileMessage) (FileMessage, error) {
 	log.Printf("[HandleFileSentReq]: message=%v", message)
 	fmt.Printf("[HandleFileSentReq]: message=%v", message)
-	success := make(chan bool, 1)
-	var filename string
-	id := -1;
-	for _,v := range sdfs.VersionTable[message.FileName]{
-		if id == -1 || id < v.IncarnationID{
-			id = v.IncarnationID
-			filename = v.FileName
+	sort.Sort(FileVersion(sdfs.VersionTable[message.FileName]))
+	var filenames []string
+	numV := 1
+	if message.NumVersion < len(sdfs.VersionTable[message.FileName]) {
+		numV = message.NumVersion
+	}else{
+		numV = len(sdfs.VersionTable[message.FileName])
+	}
+	for i := 0; i < numV; i++{
+		filenames = append(filenames, sdfs.VersionTable[message.FileName][i].FileName)
+	}
+	// id := -1;
+	// for _,v := range sdfs.VersionTable[message.FileName]{
+	// 	if id == -1 || id < v.IncarnationID{
+	// 		id = v.IncarnationID
+	// 		filename = v.FileName
+	// 	}
+	// }
+	var reply FileMessage
+	var err error
+	success := make(chan bool, numV)
+	for _, filename := range filenames{
+		reply, err = sdfs.SendFile(message.TargetAddr, PathPrefix+filename, message.FileName, &success, message.ReplicaAddr, message.CopyTable, message.ActionID, 1)
+		ok := <- success
+		if err != nil || !ok{
+			log.Println(err)
 		}
 	}
-	reply, err := sdfs.SendFile(message.TargetAddr, PathPrefix+filename, message.FileName, &success, message.ReplicaAddr, message.CopyTable, message.ActionID)
-	ok := <- success
-	if err != nil || !ok{
-		log.Println(err)
-	}
+	
 	return reply, err
 }
 
@@ -317,6 +374,7 @@ func (sdfs *SDFSClient)HandleTargetReq(message FileMessage) (FileMessage, error)
 		ReplicaAddr: fileInfo.StoreAddr,
 		CopyTable:	nil,
 		ActionID: 	sdfs.MasterIncarnationID,
+		NumVersion:	0,
 	}
 	return reply, nil
 
@@ -338,6 +396,7 @@ func (sdfs *SDFSClient)HandleMasterUpdate(message FileMessage) (FileMessage, err
 		ReplicaAddr: nil,
 		CopyTable:	nil,
 		ActionID:	0,
+		NumVersion:	0,
 	}
 	return reply, nil
 }
@@ -369,7 +428,10 @@ func (sdfs *SDFSClient)HandleLeaving(addr string){
 		if idx >= 0{
 			if entry, ok := sdfs.MasterTable[k]; ok {
 				tmp := v.StoreAddr
-				tmp[idx] = tmp[len(v.StoreAddr)-1]
+				for i:=idx;  i < len(v.StoreAddr)-1; i++ {
+					tmp[i] = tmp[i+1]
+				}
+				// tmp[idx] = tmp[len(v.StoreAddr)-1]
 				entry.StoreAddr = tmp[:len(v.StoreAddr)-1]
 				entry.NumReplica = v.NumReplica-1
 				sdfs.MasterTable[k] = entry

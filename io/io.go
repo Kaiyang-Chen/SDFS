@@ -7,6 +7,7 @@ import (
 	"CS425MP2/config"
 	// "CS425MP2/SWIM"
 	"CS425MP2/sdfs"
+	"strconv"
 )
 
 
@@ -56,6 +57,12 @@ func Handle_IO() {
 			fmt.Printf("putting \n")
 			tmp := strings.Split(input, " ")
 			Sdfs.SdfsClient.PutFile(tmp[1], tmp[2])
+		}
+		if strings.Contains(input, "get-versions") {
+			fmt.Printf("putting \n")
+			tmp := strings.Split(input, " ")
+			numVersion, _ := strconv.Atoi(tmp[2])
+			Sdfs.SdfsClient.GetVersionsFile(tmp[1], numVersion, tmp[3])
 		}
 
 	}

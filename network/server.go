@@ -6,9 +6,10 @@ import (
 	"net"
 	"os"
 	"sync"
+	// "bufio"
 )
 
-func Listen(address string, messageHandler func([]byte) (string, []byte)) error {
+func Listen(address string, messageHandler func([]byte) (bool, string, []byte)) error {
 	udpAddr, err := net.ResolveUDPAddr("udp", address)
 	if err != nil {
 		log.Println(err)
@@ -39,7 +40,7 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 		wg.Add(1)
 		go func(packet []byte) {
 			// Notice, for sdfs, the message handler will return file path
-			filePath, response := messageHandler(packet)
+			flag, filePath, response := messageHandler(packet)
 			if len(filePath) > 0 {
 				_, err = connection.WriteToUDP([]byte("ok"), addr)
 				if err != nil {
@@ -58,7 +59,7 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 				RecordSentPacket(n)
 			}
 			if len(filePath) > 0 {
-				RecvFile(filePath, connection)
+				RecvFile(filePath, connection, flag)
 				wg.Done()
 			}
 
@@ -68,8 +69,18 @@ func Listen(address string, messageHandler func([]byte) (string, []byte)) error 
 
 }
 
-func RecvFile(fileName string, conn *net.UDPConn) {
-	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
+func RecvFile(fileName string, conn *net.UDPConn, flag bool) {
+	var f *os.File
+	var err error
+	// flag := true
+	// if flag {
+	// 	f, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
+	// 	write := bufio.NewWriter(f)
+	// 	write.WriteString("--------------------------------------------------------- \n")
+	// }else{
+	// 	f, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
+	// }
+	f, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
 	// f, err := os.Create(fileName)
 	if err != nil {
 		log.Println("Create err:", err)
