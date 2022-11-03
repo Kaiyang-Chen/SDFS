@@ -6,6 +6,7 @@ import (
 	// "CS425MP2/sdfs"
 	"log"
 	"time"
+	"strings"
 )
 
 func HandleMessage(request []byte) (bool, string, []byte) {
@@ -228,6 +229,10 @@ func (swim *SWIM) HandlePiggybacks(piggybacks []Piggyback) {
 			config.MyConfig.Mu.Unlock()
 			if config.MyConfig.IsIntroducer(){
 				SdfsClient.HandleLeaving(piggyback.ServerAddr)
+			}
+			victim := strings.Split(piggyback.ServerAddr, ":")[0] + ":" + "8889"
+			if victim == config.MyConfig.GetLeaderAddr() && SdfsClient.IsNextLeader(){
+				SdfsClient.HandleNewMaster()
 			}
 		} else if piggyback.Type == SUSPECT {
 			member.State = piggyback.Type

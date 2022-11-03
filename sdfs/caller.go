@@ -212,6 +212,27 @@ func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 }
 
 
+func(sdfs *SDFSClient) SendUpdatedMaster(leaderAddr string, success *chan bool, addr string) error {
+	message := FileMessage{
+		SenderAddr:  config.MyConfig.GetSdfsAddr(),
+		MessageType: SETLEADER,
+		TargetAddr:  addr,
+		FileName: 	 leaderAddr,
+		ReplicaAddr: nil,
+		CopyTable:	nil,
+		ActionID: 	sdfs.MasterIncarnationID,
+		NumVersion:	0,
+	}
+	_, err := sdfs.SendMessage(message, addr, "", "")
+	if err != nil {
+		*success <- false
+	} else {
+		*success <- true
+	}
+	return err
+}
+
+
 func (sdfs *SDFSClient) SendTableCopy(host string, table map[string]FileAddr)  {
 	log.Printf("[SendTableCopy]\n")
 	message := FileMessage{
@@ -219,7 +240,7 @@ func (sdfs *SDFSClient) SendTableCopy(host string, table map[string]FileAddr)  {
 		MessageType: MASTERUPDATE,
 		TargetAddr:  host,
 		FileName: 	 "",
-		ReplicaAddr: nil,
+		ReplicaAddr: sdfs.ReplicaAddr.StoreAddr,
 		CopyTable:	table,
 		ActionID: 	sdfs.MasterIncarnationID,
 		NumVersion:	0,

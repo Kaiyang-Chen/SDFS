@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"time"
+	"strings"
 )
 
 func (swim *SWIM) SendMessage(request Message, host string) (Message, error) {
@@ -155,6 +156,10 @@ func confirmTicker(targetAddr string) {
 	deleteDeadServer(targetAddr)
 	if config.MyConfig.IsIntroducer(){
 		SdfsClient.HandleLeaving(targetAddr)
+	}
+	victim := strings.Split(targetAddr, ":")[0] + ":" + "8889"
+	if victim == config.MyConfig.GetLeaderAddr() && SdfsClient.IsNextLeader(){
+		SdfsClient.HandleNewMaster()
 	}
 	piggyback := Piggyback{
 		CONFIRM, targetAddr,

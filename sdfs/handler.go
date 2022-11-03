@@ -50,6 +50,8 @@ func HandleSdfsMessage(request []byte) (bool, string, []byte) {
 	}else if message.MessageType == GETVFILEREQ{
 		SdfsClient.IncreaseIncarnationID()
 		reply, err = SdfsClient.HandleGetVersionsFileReq(message);
+	}else if message.MessageType == SETLEADER{
+		reply, err = SdfsClient.HandleSetLeader(message);
 	}
 	
 	
@@ -109,6 +111,25 @@ func (sdfs *SDFSClient) allocateAddr(num int) []string{
 		addrs = keys[:num]
 	}
 	return addrs
+}
+
+
+func(sdfs *SDFSClient) HandleSetLeader(message FileMessage)(FileMessage, error) {
+	log.Printf("[HandleSetLeader]: message=%v", message)
+	fmt.Printf("[HandleSetLeader]: message=%v", message)
+	config.MyConfig.ChangeLeader(message.FileName)
+	var reply FileMessage
+	reply = FileMessage{
+		SenderAddr:  config.MyConfig.GetSdfsAddr(),
+		MessageType: ACKOWLEDGE,
+		TargetAddr:  "",
+		FileName: 	 "",
+		ReplicaAddr: nil,
+		CopyTable:	nil,
+		ActionID:	0,
+		NumVersion:	0,
+	}
+	return reply, nil
 }
 
 
@@ -313,13 +334,6 @@ func (sdfs *SDFSClient) HandleFileSentReq(message FileMessage) (FileMessage, err
 	for i := 0; i < numV; i++{
 		filenames = append(filenames, sdfs.VersionTable[message.FileName][i].FileName)
 	}
-	// id := -1;
-	// for _,v := range sdfs.VersionTable[message.FileName]{
-	// 	if id == -1 || id < v.IncarnationID{
-	// 		id = v.IncarnationID
-	// 		filename = v.FileName
-	// 	}
-	// }
 	var reply FileMessage
 	var err error
 	success := make(chan bool, numV)
@@ -388,6 +402,8 @@ func (sdfs *SDFSClient)HandleMasterUpdate(message FileMessage) (FileMessage, err
 	defer sdfs.IDMutex.Unlock()
 	sdfs.MasterTable = message.CopyTable
 	sdfs.MasterIncarnationID = message.ActionID
+	sdfs.ReplicaAddr.StoreAddr = message.ReplicaAddr
+	sdfs.ReplicaAddr.NumReplica = len(message.ReplicaAddr)
 	reply := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: ACKOWLEDGE,
@@ -406,6 +422,42 @@ func(sdfs *SDFSClient) HandleJoin(addr string){
 	defer sdfs.ResourceMutex.Unlock()
 	sdfsAddr := strings.Split(addr, ":")[0] + ":" + "8889"
 	sdfs.ResourceDistribution[sdfsAddr] = FileAddr{}
+}
+
+
+func(sdfs *SDFSClient) IsNextLeader() bool {
+	if(sdfs.ReplicaAddr.StoreAddr[0] == config.MyConfig.GetSdfsAddr()){
+		return true
+	}
+	return false
+}
+
+
+func(sdfs *SDFSClient) HandleNewMaster() {
+	log.Printf("Becoming new master!\n")
+	fmt.Printf("Becoming new master!\n")
+	leaderAddr := strings.Split(config.MyConfig.GetSdfsAddr(), ":")[0]
+	config.MyConfig.ChangeLeader(leaderAddr)
+	sdfs.HandleLeaving(config.MyConfig.GetSdfsAddr())
+	newReplicaAddr := sdfs.ReplicaAddr.StoreAddr[1:]
+	sdfs.ReplicaAddr.StoreAddr = newReplicaAddr
+	sdfs.ReplicaAddr.NumReplica = sdfs.ReplicaAddr.NumReplica-1
+	success := make(chan bool, len(sdfs.ResourceDistribution))
+	for addr, _ := range sdfs.ResourceDistribution{
+		go sdfs.SendUpdatedMaster(leaderAddr, &success, addr)
+	}
+	ok := true
+	for i := 0; i < len(sdfs.ResourceDistribution); i++ {
+		result := <-success
+		ok = ok && result
+	}
+	if !ok {
+		log.Println("Failed Updating Master to all\n")
+		fmt.Println("Failed Updating Master to all\n")
+	}
+	go SdfsClient.PeriodicalCheckMaster()
+	go SdfsClient.PeriodicalCheckResource()
+
 }
 
 

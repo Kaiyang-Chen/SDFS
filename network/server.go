@@ -76,6 +76,7 @@ func RecvFile(fileName string, conn *net.UDPConn, flag bool) {
 		f, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
 		write := bufio.NewWriter(f)
 		write.WriteString("--------------------------------------------------------- \n")
+		write.Flush()
 	}else{
 		f, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
 	}

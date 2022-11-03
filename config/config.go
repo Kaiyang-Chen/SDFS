@@ -50,6 +50,12 @@ func InitConfig() {
 	}
 }
 
+func (config *Config) ChangeLeader(addr string) {
+	config.Mu.Lock()
+	config.IntroducerAddr = addr
+	config.Mu.Unlock()
+} 
+
 func (config *Config) GetMyAddr() string {
 	return MyConfig.IP + ":" + MyConfig.Port
 }
