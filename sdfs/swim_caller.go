@@ -5,8 +5,8 @@ import (
 	"CS425MP2/network"
 	"encoding/json"
 	"log"
-	"time"
 	"strings"
+	"time"
 )
 
 func (swim *SWIM) SendMessage(request Message, host string) (Message, error) {
@@ -154,12 +154,12 @@ func confirmTicker(targetAddr string) {
 		member.State = CONFIRM
 	}
 	deleteDeadServer(targetAddr)
-	if config.MyConfig.IsIntroducer(){
+	if config.MyConfig.IsIntroducer() {
 		SdfsClient.HandleLeaving(targetAddr)
 	}
 	victim := strings.Split(targetAddr, ":")[0] + ":" + "8889"
-	if victim == config.MyConfig.GetLeaderAddr() && SdfsClient.IsNextLeader(){
-		SdfsClient.HandleNewMaster()
+	if victim == config.MyConfig.GetLeaderAddr() && SdfsClient.IsNextLeader() {
+		go SdfsClient.HandleNewMaster()
 	}
 	piggyback := Piggyback{
 		CONFIRM, targetAddr,

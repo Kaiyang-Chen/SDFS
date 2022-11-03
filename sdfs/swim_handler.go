@@ -3,10 +3,11 @@ package Sdfs
 import (
 	"CS425MP2/config"
 	"encoding/json"
+
 	// "CS425MP2/sdfs"
 	"log"
-	"time"
 	"strings"
+	"time"
 )
 
 func HandleMessage(request []byte) (bool, string, []byte) {
@@ -227,12 +228,12 @@ func (swim *SWIM) HandlePiggybacks(piggybacks []Piggyback) {
 			config.MyConfig.Mu.Lock()
 			deleteDeadServer(piggyback.ServerAddr)
 			config.MyConfig.Mu.Unlock()
-			if config.MyConfig.IsIntroducer(){
+			if config.MyConfig.IsIntroducer() {
 				SdfsClient.HandleLeaving(piggyback.ServerAddr)
 			}
 			victim := strings.Split(piggyback.ServerAddr, ":")[0] + ":" + "8889"
-			if victim == config.MyConfig.GetLeaderAddr() && SdfsClient.IsNextLeader(){
-				SdfsClient.HandleNewMaster()
+			if victim == config.MyConfig.GetLeaderAddr() && SdfsClient.IsNextLeader() {
+				go SdfsClient.HandleNewMaster()
 			}
 		} else if piggyback.Type == SUSPECT {
 			member.State = piggyback.Type

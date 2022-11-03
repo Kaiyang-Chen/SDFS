@@ -11,10 +11,10 @@ const PORT = "8888"
 const SDFSPORT = "8889"
 
 type Config struct {
-	ServerID int    // A Unique identifier assigned by the introducer, each associated with server's address
-	IP       string // My IP address for the current process
-	Port     string // My port for the current process
-	SdfsPort	string  // My port for the sdfs
+	ServerID       int      // A Unique identifier assigned by the introducer, each associated with server's address
+	IP             string   // My IP address for the current process
+	Port           string   // My port for the current process
+	SdfsPort       string   // My port for the sdfs
 	PeersAddr      []string // Address of my peers, with IP and Port
 	IntroducerAddr string   // Address of the introducer in the group, which is pre-determined
 	Mu             sync.RWMutex
@@ -54,14 +54,14 @@ func (config *Config) ChangeLeader(addr string) {
 	config.Mu.Lock()
 	config.IntroducerAddr = addr
 	config.Mu.Unlock()
-} 
+}
 
 func (config *Config) GetMyAddr() string {
 	return MyConfig.IP + ":" + MyConfig.Port
 }
 
 func (confif *Config) GetLeaderAddr() string {
-	return strings.Split(MyConfig.IntroducerAddr,":")[0] + ":" + MyConfig.SdfsPort
+	return strings.Split(MyConfig.IntroducerAddr, ":")[0] + ":" + MyConfig.SdfsPort
 }
 
 func (config *Config) GetSdfsAddr() string {
@@ -69,7 +69,7 @@ func (config *Config) GetSdfsAddr() string {
 }
 
 func (config *Config) IsIntroducer() bool {
-	return config.GetMyAddr() == MyConfig.IntroducerAddr
+	return config.GetMyAddr() == MyConfig.IntroducerAddr || config.GetSdfsAddr() == MyConfig.IntroducerAddr
 }
 
 func (config *Config) GetServerId() int {
