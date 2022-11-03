@@ -29,6 +29,9 @@ func Handle_IO() {
 		if strings.Compare("member", input) == 0 {
 			Sdfs.MySwimInstance.SwimShowPeer()
 		}
+		if strings.Compare("leader", input) == 0 {
+			fmt.Println(config.MyConfig.GetLeaderAddr())
+		}
 		if strings.Compare("master", input) == 0 {
 			Sdfs.SdfsClient.ShowMasterTable()
 		}

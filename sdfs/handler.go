@@ -426,7 +426,7 @@ func(sdfs *SDFSClient) HandleJoin(addr string){
 
 
 func(sdfs *SDFSClient) IsNextLeader() bool {
-	if(sdfs.ReplicaAddr.StoreAddr[0] == config.MyConfig.GetSdfsAddr()){
+	if(len(sdfs.ReplicaAddr.StoreAddr) > 0 && sdfs.ReplicaAddr.StoreAddr[0] == config.MyConfig.GetSdfsAddr()){
 		return true
 	}
 	return false
