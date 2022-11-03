@@ -128,6 +128,7 @@ func(sdfs *SDFSClient) HandleSetLeader(message FileMessage)(FileMessage, error) 
 		CopyTable:	nil,
 		ActionID:	0,
 		NumVersion:	0,
+		ResourceTable: nil,
 	}
 	return reply, nil
 }
@@ -152,6 +153,7 @@ func(sdfs *SDFSClient) HandleDeleteFile(message FileMessage) (FileMessage, error
 		CopyTable:	nil,
 		ActionID:	message.ActionID,
 		NumVersion:	0,
+		ResourceTable: nil,
 	}
 	return reply, nil
 }
@@ -171,6 +173,7 @@ func(sdfs *SDFSClient) HandleListFile(message FileMessage) (FileMessage, error){
 			CopyTable:	nil,
 			ActionID:	sdfs.MasterIncarnationID,
 			NumVersion:	0,
+			ResourceTable: nil,
 		}
 		
 	} else {
@@ -183,6 +186,7 @@ func(sdfs *SDFSClient) HandleListFile(message FileMessage) (FileMessage, error){
 			CopyTable:	nil,
 			ActionID:	sdfs.MasterIncarnationID,
 			NumVersion:	0,
+			ResourceTable: nil,
 		}
 	}
 	return reply, nil
@@ -203,6 +207,7 @@ func(sdfs *SDFSClient) HandleDeleteFileReq(message FileMessage) (FileMessage, er
 			CopyTable:	nil,
 			ActionID:	sdfs.MasterIncarnationID,
 			NumVersion:	0,
+			ResourceTable: nil,
 		}
 		return reply, nil
 	}
@@ -263,6 +268,7 @@ func(sdfs *SDFSClient) HandleDeleteFileReq(message FileMessage) (FileMessage, er
 		CopyTable:	nil,
 		ActionID: 	sdfs.MasterIncarnationID,
 		NumVersion:	0,
+		ResourceTable: nil,
 	}
 	return reply, err
 }
@@ -289,6 +295,7 @@ func(sdfs *SDFSClient) HandleGetFileReq(message FileMessage) (FileMessage, error
 		CopyTable:	nil,
 		ActionID: 	sdfs.MasterIncarnationID,
 		NumVersion:	0,
+		ResourceTable: nil,
 	}
 	return reply, err
 }
@@ -404,6 +411,7 @@ func (sdfs *SDFSClient)HandleMasterUpdate(message FileMessage) (FileMessage, err
 	sdfs.MasterIncarnationID = message.ActionID
 	sdfs.ReplicaAddr.StoreAddr = message.ReplicaAddr
 	sdfs.ReplicaAddr.NumReplica = len(message.ReplicaAddr)
+	sdfs.ResourceDistribution = message.ResourceTable
 	reply := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: ACKOWLEDGE,

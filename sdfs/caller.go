@@ -31,6 +31,7 @@ func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, s
 		CopyTable:	copyTable,
 		ActionID: 	IncarID,
 		NumVersion:	Type,
+		ResourceTable: nil,
 	}
 	reply, err := sdfs.SendMessage(message, host, filePath, sdfsName)
 	if err != nil {
@@ -52,6 +53,7 @@ func(sdfs *SDFSClient) SendFileReq(fileNode string, sdfsName string, targetAddr 
 		CopyTable:	copyTable,
 		ActionID:	IncarID,
 		NumVersion:	numV,
+		ResourceTable: nil,
 	}
 	_, err := sdfs.SendMessage(message, fileNode, "", "")
 	return err
@@ -70,6 +72,7 @@ func(sdfs *SDFSClient) GetFile(filePath string, sdfsName string) error{
 		CopyTable:	LocalFilePath,
 		ActionID:	0,
 		NumVersion:	0,
+		ResourceTable: nil,
 	}
 	_, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
 	if err != nil {
@@ -91,6 +94,7 @@ func(sdfs *SDFSClient) GetVersionsFile(sdfsName string, numVersion int, filePath
 		CopyTable:	LocalFilePath,
 		ActionID:	0,
 		NumVersion:	numVersion,
+		ResourceTable: nil,
 	}
 	_, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
 	if err != nil {
@@ -110,6 +114,7 @@ func(sdfs *SDFSClient) DeleteFile(sdfsName string, address string, success *chan
 		CopyTable:	nil,
 		ActionID:	IncarID,
 		NumVersion:	0,
+		ResourceTable: nil,
 	}
 	reply, err := sdfs.SendMessage(message, address, "", "")
 	if err != nil {
@@ -131,6 +136,7 @@ func(sdfs *SDFSClient) ListFileReq(sdfsName string) error {
 		CopyTable:	nil,
 		ActionID:	0,
 		NumVersion:	0,
+		ResourceTable: nil,
 	}
 	reply, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
 
@@ -161,6 +167,7 @@ func(sdfs *SDFSClient) DeleteFileReq(sdfsName string) error {
 		CopyTable:	nil,
 		ActionID:	0,
 		NumVersion:	0,
+		ResourceTable: nil,
 	}
 	reply, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", "")
 	if err != nil {
@@ -184,6 +191,7 @@ func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 		CopyTable:	nil,
 		ActionID:	0,
 		NumVersion:	0,
+		ResourceTable: nil,
 	}
 	reply, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", sdfsName)
 
@@ -222,6 +230,7 @@ func(sdfs *SDFSClient) SendUpdatedMaster(leaderAddr string, success *chan bool, 
 		CopyTable:	nil,
 		ActionID: 	sdfs.MasterIncarnationID,
 		NumVersion:	0,
+		ResourceTable: nil,
 	}
 	_, err := sdfs.SendMessage(message, addr, "", "")
 	if err != nil {
@@ -244,6 +253,7 @@ func (sdfs *SDFSClient) SendTableCopy(host string, table map[string]FileAddr)  {
 		CopyTable:	table,
 		ActionID: 	sdfs.MasterIncarnationID,
 		NumVersion:	0,
+		ResourceTable: sdfs.ResourceDistribution,
 	}
 	sdfs.SendMessage(message, host, "", "")
 

@@ -45,6 +45,7 @@ type FileMessage struct {
 	FileName	string
 	ReplicaAddr []string
 	CopyTable	map[string]FileAddr
+	ResourceTable	map[string]FileAddr
 	ActionID	int
 	NumVersion	int
 }
