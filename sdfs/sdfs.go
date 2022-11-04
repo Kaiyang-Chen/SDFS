@@ -107,7 +107,7 @@ func InitSDFS() {
 	}
 	go func() {
 		// fmt.Println(config.MyConfig.GetSdfsAddr())
-		err := network.Listen(config.MyConfig.GetSdfsAddr(), HandleSdfsMessage)
+		err := network.ListenTcp(config.MyConfig.GetSdfsAddr(), HandleSdfsMessage)
 		if err != nil {
 			log.Fatal(err)
 		}
