@@ -70,7 +70,7 @@ func SendFile(path string, conn *net.TCPConn) ([]byte, int, error) {
 	buf := make([]byte, 4096)
 	for {
 		n, err := f.Read(buf)
-		fmt.Println(n)
+		// fmt.Println(n)
 		if err != nil || n == 0{
 			if n == 0 {
 				log.Println("file read done: ", path)
