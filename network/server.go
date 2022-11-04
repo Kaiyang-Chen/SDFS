@@ -1,12 +1,12 @@
 package network
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"sync"
-	"bufio"
 )
 
 func Listen(address string, messageHandler func([]byte) (bool, string, []byte)) error {
@@ -69,7 +69,64 @@ func Listen(address string, messageHandler func([]byte) (bool, string, []byte)) 
 
 }
 
-func RecvFile(fileName string, conn *net.UDPConn, flag bool) {
+func ListenTcp(address string, messageHandler func([]byte) (bool, string, []byte)) error {
+	// udpAddr, err := net.ResolveUDPAddr("udp", address)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return err
+	// }
+
+	connection, err := net.Listen("tcp", address)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	defer connection.Close()
+	buffer := make([]byte, 1024)
+
+	for {
+		// n, addr, err := connection.ReadFromUDP(buffer)
+		conn, err := connection.Accept()
+		// fmt.Println(connection.RemoteAddr())
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		bufferCopy := make([]byte, 2048)
+		copy(bufferCopy, buffer)
+		wg := sync.WaitGroup{}
+		wg.Add(1)
+		go func(packet []byte) {
+			// Notice, for sdfs, the message handler will return file path
+			flag, filePath, response := messageHandler(packet)
+			if len(filePath) > 0 {
+				_, err = conn.Write([]byte("ok"))
+				if err != nil {
+					fmt.Println(err)
+					log.Println(err)
+					return
+				}
+			} else {
+				_, err = conn.Write(response)
+				wg.Done()
+			}
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			if len(filePath) > 0 {
+				RecvFile(filePath, conn, flag)
+				wg.Done()
+			}
+
+		}(bufferCopy)
+		wg.Wait()
+	}
+
+}
+
+func RecvFile(fileName string, conn net.Conn, flag bool) {
 	var f *os.File
 	var err error
 	if flag {
@@ -77,7 +134,7 @@ func RecvFile(fileName string, conn *net.UDPConn, flag bool) {
 		write := bufio.NewWriter(f)
 		write.WriteString("--------------------------------------------------------- \n")
 		write.Flush()
-	}else{
+	} else {
 		f, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
 	}
 	// f, err := os.Create(fileName)
@@ -91,12 +148,12 @@ func RecvFile(fileName string, conn *net.UDPConn, flag bool) {
 	fmt.Println("start receiving file: ", fileName)
 	buf := make([]byte, 4096)
 	for {
-		n, addr, err := conn.ReadFromUDP(buf)
+		n, err := conn.Read(buf)
 		if err != nil || n == 0 {
 			if n == 0 {
 				fmt.Println("File received: ", fileName)
 				log.Println("File received: ", fileName)
-				_, err := conn.WriteToUDP([]byte("received"), addr)
+				_, err := conn.Write([]byte("received"))
 				if err != nil {
 					log.Println(err)
 				}
