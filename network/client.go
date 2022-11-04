@@ -71,8 +71,8 @@ func SendFile(path string, conn *net.TCPConn) ([]byte, int, error) {
 	for {
 		n, err := f.Read(buf)
 		fmt.Println(n)
-		if err != nil {
-			if err == io.EOF {
+		if err != nil || n == 0{
+			if n == 0 {
 				log.Println("file read done: ", path)
 				conn.Write(buf[:n])
 				break
