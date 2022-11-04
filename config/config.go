@@ -8,12 +8,13 @@ import (
 )
 
 const PORT = "8888"
+const SDFSPORT = "8889"
 
 type Config struct {
-	ServerID int    // A Unique identifier assigned by the introducer, each associated with server's address
-	IP       string // My IP address for the current process
-	Port     string // My port for the current process
-
+	ServerID       int      // A Unique identifier assigned by the introducer, each associated with server's address
+	IP             string   // My IP address for the current process
+	Port           string   // My port for the current process
+	SdfsPort       string   // My port for the sdfs
 	PeersAddr      []string // Address of my peers, with IP and Port
 	IntroducerAddr string   // Address of the introducer in the group, which is pre-determined
 	Mu             sync.RWMutex
@@ -24,7 +25,7 @@ type Config struct {
 // Otherwise we will run our program on VMs.
 const DEBUG = false
 
-var MyConfig = Config{-1, "", PORT, make([]string, 0), "", sync.RWMutex{}}
+var MyConfig = Config{-1, "", PORT, SDFSPORT, make([]string, 0), "", sync.RWMutex{}}
 
 // InitConfig
 // If DEBUG is true, then all process will use localhost with different ports;
@@ -49,12 +50,26 @@ func InitConfig() {
 	}
 }
 
+func (config *Config) ChangeLeader(addr string) {
+	config.Mu.Lock()
+	config.IntroducerAddr = addr
+	config.Mu.Unlock()
+}
+
 func (config *Config) GetMyAddr() string {
 	return MyConfig.IP + ":" + MyConfig.Port
 }
 
+func (confif *Config) GetLeaderAddr() string {
+	return strings.Split(MyConfig.IntroducerAddr, ":")[0] + ":" + MyConfig.SdfsPort
+}
+
+func (config *Config) GetSdfsAddr() string {
+	return MyConfig.IP + ":" + MyConfig.SdfsPort
+}
+
 func (config *Config) IsIntroducer() bool {
-	return config.GetMyAddr() == MyConfig.IntroducerAddr
+	return config.GetMyAddr() == MyConfig.IntroducerAddr || config.GetSdfsAddr() == MyConfig.IntroducerAddr
 }
 
 func (config *Config) GetServerId() int {

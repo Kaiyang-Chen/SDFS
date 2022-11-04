@@ -3,8 +3,10 @@ package Sdfs
 import (
 	"CS425MP2/config"
 	"encoding/json"
-	"CS425MP2/sdfs"
+
+	// "CS425MP2/sdfs"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -55,7 +57,7 @@ func (swim *SWIM) HandleJOIN(message Message) (Message, error) {
 	defer swim.Mu.Unlock()
 
 	// Add the new node into my config and membership list
-	sdfs.SdfsClient.HandleJoin(message.SenderAddr)
+	SdfsClient.HandleJoin(message.SenderAddr)
 	config.MyConfig.PeersAddr = append(config.MyConfig.PeersAddr, message.SenderAddr)
 	swim.MembershipList[message.SenderAddr] = &Member{ALIVE}
 	go swim.syncNewPeer()
@@ -226,7 +228,13 @@ func (swim *SWIM) HandlePiggybacks(piggybacks []Piggyback) {
 			config.MyConfig.Mu.Lock()
 			deleteDeadServer(piggyback.ServerAddr)
 			config.MyConfig.Mu.Unlock()
-			sdfs.SdfsClient.HandleLeaving(piggyback.ServerAddr)
+			if config.MyConfig.IsIntroducer() {
+				SdfsClient.HandleLeaving(piggyback.ServerAddr)
+			}
+			victim := strings.Split(piggyback.ServerAddr, ":")[0] + ":" + "8889"
+			if victim == config.MyConfig.GetLeaderAddr() && SdfsClient.IsNextLeader() {
+				go SdfsClient.HandleNewMaster()
+			}
 		} else if piggyback.Type == SUSPECT {
 			member.State = piggyback.Type
 			go confirmTicker(piggyback.ServerAddr)

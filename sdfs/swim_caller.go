@@ -5,6 +5,7 @@ import (
 	"CS425MP2/network"
 	"encoding/json"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -153,6 +154,13 @@ func confirmTicker(targetAddr string) {
 		member.State = CONFIRM
 	}
 	deleteDeadServer(targetAddr)
+	if config.MyConfig.IsIntroducer() {
+		SdfsClient.HandleLeaving(targetAddr)
+	}
+	victim := strings.Split(targetAddr, ":")[0] + ":" + "8889"
+	if victim == config.MyConfig.GetLeaderAddr() && SdfsClient.IsNextLeader() {
+		go SdfsClient.HandleNewMaster()
+	}
 	piggyback := Piggyback{
 		CONFIRM, targetAddr,
 		MySwimInstance.ServerNewestPiggyback[targetAddr].ServerIncarnationNum,
