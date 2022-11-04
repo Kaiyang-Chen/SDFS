@@ -345,6 +345,7 @@ func (sdfs *SDFSClient) HandleFileSentReq(message FileMessage) (FileMessage, err
 
 func (sdfs *SDFSClient) HandleTargetReq(message FileMessage) (FileMessage, error) {
 	log.Printf("[HandleTargetReq]: message=%v", message)
+	fmt.Printf("[HandleTargetReq]: message=%v", message)
 	sdfs.MasterMutex.Lock()
 	defer sdfs.MasterMutex.Unlock()
 	var reply FileMessage

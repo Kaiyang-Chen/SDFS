@@ -93,8 +93,9 @@ func ListenTcp(address string, messageHandler func([]byte) (bool, string, []byte
 			log.Println(err)
 			return err
 		}
-		bufferCopy := make([]byte, 2048)
-		copy(bufferCopy, buffer)
+		n, err := conn.Read(buffer)
+		bufferCopy := make([]byte, n)
+		copy(bufferCopy, buffer[:n])
 		wg := sync.WaitGroup{}
 		wg.Add(1)
 		go func(packet []byte) {
