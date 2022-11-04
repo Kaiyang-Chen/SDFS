@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"sync"
+	"io"
 )
 
 func Listen(address string, messageHandler func([]byte) (bool, string, []byte)) error {
@@ -152,13 +153,13 @@ func RecvFile(fileName string, conn *net.TCPConn, flag bool) {
 		n, err := conn.Read(buf)
 		fmt.Println(n)
 		if err != nil || n == 0 {
-			if n == 0 {
+			if n == 0 || err == io.EOF{
 				fmt.Println("File received: ", fileName)
 				log.Println("File received: ", fileName)
-				_, err := conn.Write([]byte("received"))
-				if err != nil {
-					log.Println(err)
-				}
+				// _, err := conn.Write([]byte("received"))
+				// if err != nil {
+				// 	log.Println(err)
+				// }
 			} else {
 				log.Println("Read file err:", err)
 			}

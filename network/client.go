@@ -74,9 +74,7 @@ func SendFile(path string, conn *net.TCPConn) ([]byte, int, error) {
 		if err != nil || n == 0{
 			if n == 0 {
 				log.Println("file read done: ", path)
-				fmt.Println("file read done: ", path)
 				conn.Write(buf[:n])
-				fmt.Println("file read done111: ", path)
 				break
 			} else {
 				log.Println("f.Read err:", err)
@@ -87,16 +85,15 @@ func SendFile(path string, conn *net.TCPConn) ([]byte, int, error) {
 		conn.Write(buf[:n])
 	}
 
-	log.Println("end sending file: ", path)
 	// fmt.Println("end sending file: ", path)
 	// Check whether file transmission done on server side
 	buffer := make([]byte, 1024)
-	n, err := conn.Read(buffer)
-	if err != nil {
-		log.Println(err)
-		return nil, 0, err
-	}
-	return buffer, n, nil
+	// n, err := conn.Read(buffer)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return nil, 0, err
+	// }
+	return buffer, 0, nil
 }
 
 // func SdfsDial(host string, FilePath string, sdfsName string, request []byte) ([]byte, error) {
@@ -172,14 +169,15 @@ func SdfsDial(host string, FilePath string, sdfsName string, request []byte) ([]
 			buffer, n, err = SendFile(FilePath, connection)
 		}
 		CONN--
-		if "received" == string(buffer[:n]) {
-			fmt.Println("File sending succeed: ", FilePath)
-			log.Println("File sending failed: ", FilePath)
-			return buffer[:n], nil
-		} else {
-			log.Println("File sending failed: ", FilePath)
-			return buffer[:n], errors.New("File sending failed.")
-		}
+		return buffer[:n], nil
+		// if "received" == string(buffer[:n]) {
+		// 	fmt.Println("File sending succeed: ", FilePath)
+		// 	log.Println("File sending failed: ", FilePath)
+		// 	return buffer[:n], nil
+		// } else {
+		// 	log.Println("File sending failed: ", FilePath)
+		// 	return buffer[:n], errors.New("File sending failed.")
+		// }
 	} else {
 		CONN--
 		return buffer[:n], nil
