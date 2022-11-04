@@ -150,6 +150,7 @@ func RecvFile(fileName string, conn *net.TCPConn, flag bool) {
 	buf := make([]byte, 4096)
 	for {
 		n, err := conn.Read(buf)
+		fmt.Println(n)
 		if err != nil || n == 0 {
 			if n == 0 {
 				fmt.Println("File received: ", fileName)
