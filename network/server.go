@@ -40,7 +40,7 @@ func Listen(address string, messageHandler func([]byte) (bool, string, []byte)) 
 		wg.Add(1)
 		go func(packet []byte) {
 			// Notice, for sdfs, the message handler will return file path
-			flag, filePath, response := messageHandler(packet)
+			_, filePath, response := messageHandler(packet)
 			if len(filePath) > 0 {
 				_, err = connection.WriteToUDP([]byte("ok"), addr)
 				if err != nil {
@@ -59,7 +59,7 @@ func Listen(address string, messageHandler func([]byte) (bool, string, []byte)) 
 				RecordSentPacket(n)
 			}
 			if len(filePath) > 0 {
-				RecvFile(filePath, connection, flag)
+				// RecvFile(filePath, connection, flag)
 				wg.Done()
 			}
 
@@ -75,8 +75,8 @@ func ListenTcp(address string, messageHandler func([]byte) (bool, string, []byte
 	// 	log.Println(err)
 	// 	return err
 	// }
-
-	connection, err := net.Listen("tcp", address)
+	tcpAddr, err := net.ResolveTCPAddr("tcp", address)
+	connection, err := net.ListenTCP("tcp", tcpAddr)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -87,7 +87,7 @@ func ListenTcp(address string, messageHandler func([]byte) (bool, string, []byte
 
 	for {
 		// n, addr, err := connection.ReadFromUDP(buffer)
-		conn, err := connection.Accept()
+		conn, err := connection.AcceptTCP()
 		// fmt.Println(connection.RemoteAddr())
 		if err != nil {
 			log.Println(err)
@@ -126,7 +126,7 @@ func ListenTcp(address string, messageHandler func([]byte) (bool, string, []byte
 
 }
 
-func RecvFile(fileName string, conn net.Conn, flag bool) {
+func RecvFile(fileName string, conn *net.TCPConn, flag bool) {
 	var f *os.File
 	var err error
 	if flag {

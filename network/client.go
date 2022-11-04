@@ -57,7 +57,7 @@ func Dial(host string, request []byte) ([]byte, error) {
 	return buffer[:n], nil
 }
 
-func SendFile(path string, conn net.Conn) ([]byte, int, error) {
+func SendFile(path string, conn *net.TCPConn) ([]byte, int, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		log.Println("os.Open err:", err)
@@ -145,8 +145,8 @@ func SdfsDial(host string, FilePath string, sdfsName string, request []byte) ([]
 		return nil, errors.New("maximum connection reached")
 	}
 	CONN++
-	// udpAddr, err := net.ResolveUDPAddr("udp", host)
-	connection, err := net.Dial("tcp", host)
+	tcpAddr, err := net.ResolveTCPAddr("tcp", host)
+	connection, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
 		log.Println(err)
 		return nil, err
