@@ -3,7 +3,7 @@ package network
 import (
 	"errors"
 	"fmt"
-	"io"
+	// "io"
 	"log"
 	"math/rand"
 	"net"
