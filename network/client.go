@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"fmt"
 )
 
 const DropPacketProbability = 0.00
