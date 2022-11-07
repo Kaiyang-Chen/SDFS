@@ -194,7 +194,7 @@ func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 		ResourceTable: nil,
 	}
 	reply, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", sdfsName)
-
+	fmt.Printf("[AckHandleTargetReq]: message=%v", message)
 	if err != nil {
 		log.Println(err)
 		return err
