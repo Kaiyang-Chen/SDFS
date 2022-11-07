@@ -18,7 +18,7 @@ const PathPrefix = "/home/kc68/files/"
 
 // Type of message in sdfs
 const (
-	TARGETREQ     = 0
+	TARGETREQ     = 13
 	TARGETSENT    = 1
 	FILESENT      = 2
 	FILESENTACK   = 3
