@@ -353,6 +353,7 @@ func (sdfs *SDFSClient) HandleTargetReq(message FileMessage) (FileMessage, error
 	if !exist {
 		addrs := sdfs.allocateAddr(COPYNUM)
 		sdfs.MasterTable[message.FileName] = FileAddr{len(addrs), addrs}
+		fmt.Println(sdfs.MasterTable[message.FileName])
 		sdfs.ResourceMutex.Lock()
 		defer sdfs.ResourceMutex.Unlock()
 		for _, addr := range addrs {
@@ -385,6 +386,7 @@ func (sdfs *SDFSClient) HandleTargetReq(message FileMessage) (FileMessage, error
 		ActionID:    sdfs.MasterIncarnationID,
 		NumVersion:  0,
 	}
+	fmt.Printf("[HandleTargetReqReply]: message=%v", message)
 	return reply, nil
 
 }
