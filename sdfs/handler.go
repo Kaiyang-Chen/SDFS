@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
+	// "sync"
 )
 
 func HandleSdfsMessage(request []byte) (bool, string, []byte) {
@@ -364,18 +364,20 @@ func (sdfs *SDFSClient) HandleTargetReq(message FileMessage) (FileMessage, error
 			}
 		}
 		// hot update mastertable changes to its replica
-		wg := sync.WaitGroup{}
-		wg.Add(len(sdfs.ReplicaAddr.StoreAddr))
-		for _, addr := range sdfs.ReplicaAddr.StoreAddr {
-			go func(address string) {
-				sdfs.SendTableCopy(address, sdfs.MasterTable)
-				wg.Done()
-			}(addr)
-		}
-		wg.Wait()
+		// wg := sync.WaitGroup{}
+		// wg.Add(len(sdfs.ReplicaAddr.StoreAddr))
+		// for _, addr := range sdfs.ReplicaAddr.StoreAddr {
+		// 	go func(address string) {
+		// 		sdfs.SendTableCopy(address, sdfs.MasterTable)
+		// 		wg.Done()
+		// 		fmt.Println(address)
+		// 	}(addr)
+		// }
+		// wg.Wait()
 
 	}
 	fileInfo, _ := sdfs.MasterTable[message.FileName]
+	fmt.Println(sdfs.MasterTable[message.FileName].StoreAddr)
 	reply = FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: TARGETSENT,
@@ -386,7 +388,7 @@ func (sdfs *SDFSClient) HandleTargetReq(message FileMessage) (FileMessage, error
 		ActionID:    sdfs.MasterIncarnationID,
 		NumVersion:  0,
 	}
-	fmt.Printf("[HandleTargetReqReply]: message=%v", message)
+	fmt.Printf("[HandleTargetReqReply]: message=%v", reply)
 	return reply, nil
 
 }

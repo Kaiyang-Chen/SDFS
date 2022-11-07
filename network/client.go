@@ -165,6 +165,7 @@ func SdfsDial(host string, FilePath string, sdfsName string, request []byte) ([]
 	}
 	if len(FilePath) != 0 && len(sdfsName) != 0 {
 		if "ok" == string(buffer[:n]) {
+			fmt.Println("start sending file: ", FilePath)
 			buffer, n, err = SendFile(FilePath, connection)
 		}
 		CONN--
