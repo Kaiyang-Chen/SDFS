@@ -28,6 +28,7 @@ func main() {
 	// SWIM.InitSwimInstance()
 	Sdfs.InitSwimInstance()
 	Sdfs.InitSDFS()
+	Sdfs.InitIDunnoClient()
 	io.Handle_IO()
 
 	// go network.PeriodicalRecorder()

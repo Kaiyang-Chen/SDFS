@@ -61,6 +61,9 @@ func Handle_IO() {
 			tmp := strings.Split(input, " ")
 			Sdfs.SdfsClient.PutFile(tmp[1], tmp[2])
 		}
+		if strings.Contains(input, "waitq") {
+			Sdfs.IDunnoMaster.ShowWait()
+		}
 		if strings.Contains(input, "get-versions") {
 			fmt.Printf("putting \n")
 			tmp := strings.Split(input, " ")
