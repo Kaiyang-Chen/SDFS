@@ -230,7 +230,7 @@ func (swim *SWIM) HandlePiggybacks(piggybacks []Piggyback) {
 			config.MyConfig.Mu.Unlock()
 			if config.MyConfig.IsIntroducer() {
 				SdfsClient.HandleLeaving(piggyback.ServerAddr)
-				idunnoAddr := strings.Split(targetAddr, ":")[0] + ":" + "8890"
+				idunnoAddr := strings.Split(piggyback.ServerAddr, ":")[0] + ":" + "8890"
 				IDunnoMaster.HandleLeaving(idunnoAddr)
 			}
 			victim := strings.Split(piggyback.ServerAddr, ":")[0] + ":" + "8889"

@@ -187,17 +187,17 @@ func (idunno *IDUNNOMaster) PopWaitQ (model string) string{
 func (idunno *IDUNNOMaster) PopRunQ (model string) string{
 	idunno.RunningQMutex.Lock()
 	defer idunno.RunningQMutex.Unlock()
-	res, _ := idunno.RunningQMutex[model].PopFront().(string)
+	res, _ := idunno.RunningJobQueues[model].PopFront().(string)
 	return res
 }
 
 func (idunno *IDUNNOMaster) DeleteRunQ (model string, taskName string) {
 	idunno.RunningQMutex.Lock()
 	defer idunno.RunningQMutex.Unlock()
-	for i, n := 0, idunno.RunningQMutex[model].Len(); i < n; i++ {
+	for i, n := 0, idunno.RunningJobQueues[model].Len(); i < n; i++ {
 		tmp := idunno.WaitJobQueues[model].PopFront()
 		if(tmp != taskName){
-			idunno.WaitJobQueues[m.ModelName].PushBack(tmp)
+			idunno.WaitJobQueues[model].PushBack(tmp)
 		}
 	}
 }
@@ -228,7 +228,7 @@ func (idunno *IDUNNOMaster) ChangeResourceTable (targetAddr string, taskName str
 }
 
 
-func (idunno *IDUNNOMaster) DeleteResourceTable (targetAddr string, taskName string) string {
+func (idunno *IDUNNOMaster) DeleteResourceTable (targetAddr string) string {
 	idunno.ResourceMutex.Lock()
 	defer idunno.ResourceMutex.Unlock()
 	res := idunno.ResourceTable[targetAddr]
@@ -255,7 +255,7 @@ func (idunno *IDUNNOMaster) HandleLeaving(addr string) {
 	// defer TriggerMutex.Unlock()
 	// defer ResourceMutex.Unlock()
 	for _, m := range idunno.ModelList{
-		taskName := idunno.DeleteResourceTable(addr, taskName)
+		taskName := idunno.DeleteResourceTable(addr)
 		idunno.DeleteRunQ(m.ModelName, taskName)
 		queryName := strings.Split(taskName, "-")[0]
 		idunno.PushWaitQ(m.ModelName, queryName, false)
