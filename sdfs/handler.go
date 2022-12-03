@@ -419,9 +419,13 @@ func (sdfs *SDFSClient) HandleMasterUpdate(message FileMessage) (FileMessage, er
 
 func (sdfs *SDFSClient) HandleJoin(addr string) {
 	sdfs.ResourceMutex.Lock()
+	IDunnoMaster.ResourceMutex.Lock()
+	defer IDunnoMaster.ResourceMutex.Unlock()
 	defer sdfs.ResourceMutex.Unlock()
 	sdfsAddr := strings.Split(addr, ":")[0] + ":" + "8889"
 	sdfs.ResourceDistribution[sdfsAddr] = FileAddr{}
+	idunnoAddr := strings.Split(addr, ":")[0] + ":" + "8890"
+	IDunnoMaster.ResourceTable[idunnoAddr] = ""
 }
 
 func (sdfs *SDFSClient) IsNextLeader() bool {

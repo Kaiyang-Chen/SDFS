@@ -64,6 +64,12 @@ func Handle_IO() {
 		if strings.Contains(input, "waitq") {
 			Sdfs.IDunnoMaster.ShowWait()
 		}
+		if strings.Contains(input, "runq") {
+			Sdfs.IDunnoMaster.ShowRun()
+		}
+		if strings.Contains(input, "rtable") {
+			Sdfs.IDunnoMaster.ShowResourceTable()
+		}
 		if strings.Contains(input, "get-versions") {
 			fmt.Printf("putting \n")
 			tmp := strings.Split(input, " ")
