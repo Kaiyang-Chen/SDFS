@@ -33,11 +33,6 @@ const (
 	SETLEADER     = 12
 )
 
-type Args struct {
-	SdfsName   string
-	LocalName  string
-	ModelPath  string
-}
 
 type FileAddr struct {
 	NumReplica int

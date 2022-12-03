@@ -1,55 +1,59 @@
 package Sdfs
 
-// import (
-// 	"fmt"
-// 	"net"
-// 	"net/rpc"
-// 	"os"
-// 	"os/exec"
-// )
+import (
+	"fmt"
+	"net"
+	"net/rpc"
+	"os"
+	"os/exec"
+	"strings"
+)
 
 
-// type InferenceService string
-// var InferenceClient Inference
+type InferenceService struct{}
 
-// func (t *InferenceService) Inference(args *Args, reply *string) error {
-// 	SdfsClient.GetFile(args.LocalName, args.SdfsName)
-// 	var cmd = exec.Command("python3", args.ModelPath, args.LocalName, args.LocalName+"_out")
-// 	SdfsClient.PutFile(args.LocalName+"_out", args.SdfsName+"_out")
-// 	var res []byte
-// 	var err error
-// 	res, err = cmd.CombinedOutput()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	*reply = string(res)
-// 	return nil
-// }
 
-// func (t *InferenceService) Listen() {
 
-// 	inference := new(InferenceService)
-// 	rpc.Register(inference)
+func (is *InferenceService) Inference(args *Args, reply *string) error {
+	// SdfsClient.GetFile(args.LocalName, args.SdfsName)
+	var cmd = exec.Command("python3", args.ModelPath, args.InputPath, args.OutputPath)
+	// var res []byte
+	var err error
+	_, err = cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+	tmp := strings.Split(args.OutputPath,"/")
+	sdfsName := tmp[len(tmp)-1]
+	SdfsClient.PutFile(args.OutputPath, sdfsName)
+	*reply = "Output have been save to " + string(sdfsName) + " on sdfs.\n"
+	return nil
+}
 
-// 	tcpAddr, err := net.ResolveTCPAddr("tcp", ":8890")
-// 	checkError(err)
+func (idunno *IDUNNOMaster) RegisterRpc() {
 
-// 	listener, err := net.ListenTCP("tcp", tcpAddr)
-// 	checkError(err)
+	inference := new(InferenceService)
+	rpc.Register(inference)
 
-// 	for {
-// 		conn, err := listener.Accept()
-// 		if err != nil {
-// 			continue
-// 		}
-// 		rpc.ServeConn(conn)
-// 	}
+	tcpAddr, err := net.ResolveTCPAddr("tcp", ":8890")
+	checkError(err)
 
-// }
+	listener, err := net.ListenTCP("tcp", tcpAddr)
+	checkError(err)
 
-// func checkError(err error) {
-// 	if err != nil {
-// 		fmt.Println("Fatal error ", err.Error())
-// 		os.Exit(1)
-// 	}
-// }
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			continue
+		}
+		rpc.ServeConn(conn)
+	}
+
+}
+
+func checkError(err error) {
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+		os.Exit(1)
+	}
+}

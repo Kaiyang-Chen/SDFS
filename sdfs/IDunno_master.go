@@ -2,8 +2,7 @@ package Sdfs
 
 import (
 	"fmt"
-	// "net"
-	// "net/rpc"
+	"net/rpc"
 	"CS425MP2/config"
 	"sync"
 	"time"
@@ -15,9 +14,15 @@ import (
 	"strings"
 )
 
-const TIMEGRAN = 20
+const TIMEGRAN = 10
 const RES101 = "resnet101"
 const RES50 = "resnet50"
+
+type Args struct {
+	InputPath   string
+	OutputPath  string
+	ModelPath  string
+}
 
 type IDUNNOMaster struct{
 	WaitJobQueues	map[string]deque.Deque
@@ -65,6 +70,7 @@ func InitIDunnoClient(){
 		go IDunnoMaster.ProcessQueryRequest()
 		go IDunnoMaster.Scheduler()
 	}
+	go IDunnoMaster.RegisterRpc()
 }
 
 func GetRecentQueryRate(ModelName string) float64 {
@@ -137,7 +143,8 @@ func (idunno *IDUNNOMaster) ShowRun(){
 
 func (idunno *IDUNNOMaster) Scheduler(){
 	for {
-		for node, task := range idunno.ResourceTable{
+		tmp := idunno.ResourceTable
+		for node, task := range tmp{
 			if task == "" {
 				if(!idunno.WaitJobQueues[RES50].Empty() || !idunno.WaitJobQueues[RES101].Empty()) {
 					go idunno.DoScheduling(node)
@@ -248,19 +255,41 @@ func (idunno *IDUNNOMaster) ChangeModelList (model string, timeStart time.Time, 
 }
 
 func (idunno *IDUNNOMaster) HandleLeaving(addr string) {
-	// RunningQMutex.Lock()
-	// TriggerMutex.Lock()
-	// ResourceMutex.Lock()
-	// defer RunningQMutex.Unlock()
-	// defer TriggerMutex.Unlock()
-	// defer ResourceMutex.Unlock()
-	for _, m := range idunno.ModelList{
-		taskName := idunno.DeleteResourceTable(addr)
-		idunno.DeleteRunQ(m.ModelName, taskName)
-		queryName := strings.Split(taskName, "-")[0]
-		idunno.PushWaitQ(m.ModelName, queryName, false)
-		idunno.DeleteTriggerT(m.ModelName, taskName)
+	taskName := idunno.DeleteResourceTable(addr)
+	queryName := strings.Split(taskName, "-")[0]
+	model := strings.Split(taskName, "-")[2]
+	idunno.RollBackQuery(model, queryName, taskName)
+}
+
+
+func (idunno *IDUNNOMaster) RollBackQuery(model string, queryName string, taskName string) {
+	idunno.DeleteRunQ(model, taskName)
+	idunno.PushWaitQ(model, queryName, false)
+	idunno.DeleteTriggerT(model, taskName)
+}
+
+
+func (idunno *IDUNNOMaster) DoInference(targetAddr string, model string, queryName string, taskName string) error {
+	var modelPath string
+	if(model == RES50) {
+		modelPath = "/home/kc68/SDFS/resnet50.py"
+	}else{
+		modelPath = "/home/kc68/SDFS/resnet101.py"
 	}
+	args := Args{"/home/kc68/SDFS/dataset/"+queryName, "/home/kc68/files/"+taskName+"_out", modelPath}
+	client, err := rpc.Dial("tcp", targetAddr)
+	if err != nil {
+		log.Println("dialing:", err)
+		return err
+	}
+	var inferenceResult string
+	err = client.Call("InferenceService.Inference", args, &inferenceResult)
+	if err != nil {
+		log.Println(err)
+	}else {
+		fmt.Println(inferenceResult)
+	}
+	return err
 }
 
 
@@ -275,18 +304,26 @@ func (idunno *IDUNNOMaster) DoScheduling(targetAddr string) {
 	} else if (GetRecentQueryRate(RES101) == GetRecentQueryRate(RES50)){
 		model = RES50
 	}
-	fmt.Println(model)
+	// fmt.Println(model)
 	if model != "" {
 		idunno.IncreaseIncarnationNum()
 		queryName := idunno.PopWaitQ(model) 
-		taskName := queryName + "-" + strconv.Itoa(idunno.IncarnationNum) + model
+		taskName := queryName + "-" + strconv.Itoa(idunno.IncarnationNum) + "-" + model
 		idunno.PushRunQ(model, taskName, true)
 		timeStart := time.Now()
 		idunno.PushTriggerT(model, taskName, timeStart)
 		idunno.ChangeResourceTable(targetAddr, taskName, false)
-		// rpc call task, error handling
-		time.Sleep(10 * time.Second)
+
+		// time.Sleep(6 * time.Second)
 		// ------------
+		err := idunno.DoInference(targetAddr, model, queryName, taskName)
+		if err != nil {
+			fmt.Println("inference err:", err)
+			idunno.RollBackQuery(model, queryName, taskName)
+			return
+		} else {
+			fmt.Printf("Query %s finished.\n", taskName)
+		}
 		
 		timeEnd := time.Now()
 		idunno.ChangeModelList(model, timeStart, timeEnd)
