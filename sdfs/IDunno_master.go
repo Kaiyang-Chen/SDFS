@@ -11,9 +11,11 @@ import (
 	"math/rand"
 	"log"
 	"io/ioutil"
+	"strconv"
+	"strings"
 )
 
-const TIMEGRAN = 10
+const TIMEGRAN = 20
 const RES101 = "resnet101"
 const RES50 = "resnet50"
 
@@ -52,6 +54,8 @@ func InitIDunnoClient(){
 	IDunnoMaster.RunningJobQueues[RES101] = deque.NewDeque()
 	IDunnoMaster.ResourceTable = make(map[string]string)
 	IDunnoMaster.TriggerTime = make(map[string]map[string]time.Time)
+	IDunnoMaster.TriggerTime[RES50] = make(map[string]time.Time)
+	IDunnoMaster.TriggerTime[RES101] = make(map[string]time.Time)
 	IDunnoMaster.ModelList = make(map[string]Model)
 	IDunnoMaster.IncarnationNum = 0
 	IDunnoMaster.ModelList[RES50] = Model{RES50, make([]float64, 0), 0, 2, 0, sync.RWMutex{}}
@@ -66,7 +70,7 @@ func InitIDunnoClient(){
 func GetRecentQueryRate(ModelName string) float64 {
 	count := 0
 	for _, t := range IDunnoMaster.TriggerTime[ModelName] {
-		if time.Now().Before(t.Add(TIMEGRAN * time.Second)) {
+		if time.Now().Before(t.Add(2 * TIMEGRAN * time.Second)) {
 			count++;
 		}
 	}
@@ -130,6 +134,7 @@ func (idunno *IDUNNOMaster) ShowRun(){
 	}
 }
 
+
 func (idunno *IDUNNOMaster) Scheduler(){
 	for {
 		for node, task := range idunno.ResourceTable{
@@ -147,12 +152,29 @@ func (idunno *IDUNNOMaster) IncreaseIncarnationNum() {
 	idunno.IDMutex.Lock()
 	defer idunno.IDMutex.Unlock()
 	idunno.IncarnationNum = idunno.IncarnationNum + 1
+	// fmt.Println(idunno.IncarnationNum)
 }
 
-func (idunno *IDUNNOMaster) PushRunQ (model string, taskName string) {
+func (idunno *IDUNNOMaster) PushRunQ (model string, taskName string, tail bool) {
 	idunno.RunningQMutex.Lock()
 	defer idunno.RunningQMutex.Unlock()
-	idunno.RunningJobQueues[model].PushBack(taskName)
+	if (tail) {
+		idunno.RunningJobQueues[model].PushBack(taskName)
+	} else {
+		idunno.RunningJobQueues[model].PushFront(taskName)
+	}
+	
+}
+
+func (idunno *IDUNNOMaster) PushWaitQ (model string, taskName string, tail bool) {
+	idunno.WaitQMutex.Lock()
+	defer idunno.WaitQMutex.Unlock()
+	if (tail) {
+		idunno.WaitJobQueues[model].PushBack(taskName)
+	} else {
+		idunno.WaitJobQueues[model].PushFront(taskName)
+	}
+	
 }
 
 func (idunno *IDUNNOMaster) PopWaitQ (model string) string{
@@ -162,22 +184,58 @@ func (idunno *IDUNNOMaster) PopWaitQ (model string) string{
 	return res
 }
 
+func (idunno *IDUNNOMaster) PopRunQ (model string) string{
+	idunno.RunningQMutex.Lock()
+	defer idunno.RunningQMutex.Unlock()
+	res, _ := idunno.RunningQMutex[model].PopFront().(string)
+	return res
+}
+
+func (idunno *IDUNNOMaster) DeleteRunQ (model string, taskName string) {
+	idunno.RunningQMutex.Lock()
+	defer idunno.RunningQMutex.Unlock()
+	for i, n := 0, idunno.RunningQMutex[model].Len(); i < n; i++ {
+		tmp := idunno.WaitJobQueues[model].PopFront()
+		if(tmp != taskName){
+			idunno.WaitJobQueues[m.ModelName].PushBack(tmp)
+		}
+	}
+}
+
 func (idunno *IDUNNOMaster) PushTriggerT (model string, taskName string, timeStart time.Time) {
 	idunno.TriggerMutex.Lock()
 	defer idunno.TriggerMutex.Unlock()
-	idunno.TriggerTime[RES101][taskName] = timeStart
+	idunno.TriggerTime[model][taskName] = timeStart
+}
+
+func (idunno *IDUNNOMaster) DeleteTriggerT (model string, taskName string) {
+	idunno.TriggerMutex.Lock()
+	defer idunno.TriggerMutex.Unlock()
+	delete(idunno.TriggerTime[model], taskName)
 }
 
 
-func (idunno *IDUNNOMaster) ChangeResourceTable (targetAddr string, taskName string, delete bool) {
+func (idunno *IDUNNOMaster) ChangeResourceTable (targetAddr string, taskName string, delete bool) string {
 	idunno.ResourceMutex.Lock()
 	defer idunno.ResourceMutex.Unlock()
+	res := idunno.ResourceTable[targetAddr]
 	if(delete) {
 		idunno.ResourceTable[targetAddr] = ""
 	} else {
 		idunno.ResourceTable[targetAddr] = taskName
 	}
+	return res;
 }
+
+
+func (idunno *IDUNNOMaster) DeleteResourceTable (targetAddr string, taskName string) string {
+	idunno.ResourceMutex.Lock()
+	defer idunno.ResourceMutex.Unlock()
+	res := idunno.ResourceTable[targetAddr]
+	delete(idunno.ResourceTable, targetAddr)	
+	return res;
+}
+
 
 func (idunno *IDUNNOMaster) ChangeModelList (model string, timeStart time.Time, timeEnd time.Time) {
 	idunno.ModelListMutex.Lock()
@@ -189,12 +247,26 @@ func (idunno *IDUNNOMaster) ChangeModelList (model string, timeStart time.Time, 
 	}
 }
 
-
+func (idunno *IDUNNOMaster) HandleLeaving(addr string) {
+	// RunningQMutex.Lock()
+	// TriggerMutex.Lock()
+	// ResourceMutex.Lock()
+	// defer RunningQMutex.Unlock()
+	// defer TriggerMutex.Unlock()
+	// defer ResourceMutex.Unlock()
+	for _, m := range idunno.ModelList{
+		taskName := idunno.DeleteResourceTable(addr, taskName)
+		idunno.DeleteRunQ(m.ModelName, taskName)
+		queryName := strings.Split(taskName, "-")[0]
+		idunno.PushWaitQ(m.ModelName, queryName, false)
+		idunno.DeleteTriggerT(m.ModelName, taskName)
+	}
+}
 
 
 
 func (idunno *IDUNNOMaster) DoScheduling(targetAddr string) {
-	fmt.Printf("DoScheduling!!\n")
+	// fmt.Printf("DoScheduling!!\n")
 	model := ""
 	if(GetRecentQueryRate(RES50) > GetRecentQueryRate(RES101) && !idunno.WaitJobQueues[RES101].Empty()){
 		model = RES101
@@ -203,17 +275,17 @@ func (idunno *IDUNNOMaster) DoScheduling(targetAddr string) {
 	} else if (GetRecentQueryRate(RES101) == GetRecentQueryRate(RES50)){
 		model = RES50
 	}
-
+	fmt.Println(model)
 	if model != "" {
 		idunno.IncreaseIncarnationNum()
 		queryName := idunno.PopWaitQ(model) 
-		taskName := queryName + "-" + string(idunno.IncarnationNum)
-		idunno.PushRunQ(model, taskName)
+		taskName := queryName + "-" + strconv.Itoa(idunno.IncarnationNum) + model
+		idunno.PushRunQ(model, taskName, true)
 		timeStart := time.Now()
 		idunno.PushTriggerT(model, taskName, timeStart)
 		idunno.ChangeResourceTable(targetAddr, taskName, false)
 		// rpc call task, error handling
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 		// ------------
 		
 		timeEnd := time.Now()
@@ -221,3 +293,9 @@ func (idunno *IDUNNOMaster) DoScheduling(targetAddr string) {
 		idunno.ChangeResourceTable(targetAddr, taskName, true)
 	}
 }
+
+
+// 1. handel leaving
+// 2. copy IDunno master info, hot update, if change master, undo all the working task
+// 3. rpc for inference
+// 4. cmdline

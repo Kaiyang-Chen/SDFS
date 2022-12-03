@@ -441,6 +441,7 @@ func (sdfs *SDFSClient) HandleNewMaster() {
 	// leaderAddr := strings.Split(config.MyConfig.GetSdfsAddr(), ":")[0]
 	config.MyConfig.ChangeLeader(config.MyConfig.GetSdfsAddr())
 	sdfs.HandleLeaving(config.MyConfig.GetSdfsAddr())
+	IDunnoMaster.HandleLeaving(config.MyConfig.GetIDunnoAddr())
 	newReplicaAddr := sdfs.ReplicaAddr.StoreAddr[1:]
 	sdfs.ReplicaAddr.StoreAddr = newReplicaAddr
 	sdfs.ReplicaAddr.NumReplica = sdfs.ReplicaAddr.NumReplica - 1
