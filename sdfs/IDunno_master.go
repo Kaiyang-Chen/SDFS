@@ -409,7 +409,9 @@ func (idunno *IDUNNOMaster) RollBackQuery(model string, queryName string, taskNa
 	idunno.PushWaitQ(model, queryName, false)
 	idunno.DeleteTriggerT(model, taskName)
 	targetAddr := idunno.GetComputeNode(taskName)
-	idunno.ChangeResourceTable(targetAddr, taskName, true)
+	if(targetAddr != "") {
+		idunno.ChangeResourceTable(targetAddr, taskName, true)
+	}
 }
 
 
