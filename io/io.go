@@ -61,6 +61,30 @@ func Handle_IO() {
 			tmp := strings.Split(input, " ")
 			Sdfs.SdfsClient.PutFile(tmp[1], tmp[2])
 		}
+		if strings.Compare("waitq", input) == 0 {
+			Sdfs.IDunnoMaster.ShowWait(true)
+		}
+		if strings.Compare("runq", input) == 0 {
+			Sdfs.IDunnoMaster.ShowRun(true)
+		}
+		if strings.Compare("C1", input) == 0 {
+			Sdfs.IDunnoMaster.C1()
+		}
+		if strings.Compare("C2", input) == 0 {
+			Sdfs.IDunnoMaster.C2()
+		}
+		if strings.Contains(input, "C3") {
+			tmp := strings.Split(input, " ")
+			batchSize, _ := strconv.Atoi(tmp[2])
+			Sdfs.IDunnoMaster.C3(tmp[1], batchSize)
+		}
+		if strings.Contains(input, "C4") {
+			tmp := strings.Split(input, " ")
+			Sdfs.IDunnoMaster.C4(tmp[1])
+		}
+		if strings.Compare("C5", input) == 0 {
+			Sdfs.IDunnoMaster.ShowResourceTable()
+		}
 		if strings.Contains(input, "get-versions") {
 			fmt.Printf("putting \n")
 			tmp := strings.Split(input, " ")

@@ -147,14 +147,14 @@ func RecvFile(fileName string, conn *net.TCPConn, flag bool) {
 	defer f.Close()
 
 	// fmt.Println(conn.RemoteAddr())
-	fmt.Println("start receiving file: ", fileName)
+	// fmt.Println("start receiving file: ", fileName)
 	buf := make([]byte, 4096)
 	for {
 		n, err := conn.Read(buf)
 		// fmt.Println(n)
 		if err != nil || n == 0 {
 			if n == 0 || err == io.EOF{
-				fmt.Println("File received: ", fileName)
+				// fmt.Println("File received: ", fileName)
 				log.Println("File received: ", fileName)
 				// _, err := conn.Write([]byte("received"))
 				// if err != nil {

@@ -4,7 +4,8 @@ import (
 	"CS425MP2/config"
 	// "CS425MP2/SWIM"
 	"CS425MP2/network"
-	"fmt"
+	// "github.com/edwingeng/deque"
+	// "fmt"
 	"log"
 	"os"
 	"strings"
@@ -18,7 +19,7 @@ const PathPrefix = "/home/kc68/files/"
 
 // Type of message in sdfs
 const (
-	TARGETREQ     = 0
+	TARGETREQ     = 13
 	TARGETSENT    = 1
 	FILESENT      = 2
 	FILESENTACK   = 3
@@ -32,6 +33,7 @@ const (
 	GETVFILEREQ   = 11
 	SETLEADER     = 12
 )
+
 
 type FileAddr struct {
 	NumReplica int
@@ -49,6 +51,12 @@ type FileMessage struct {
 	ResourceTable map[string]FileAddr
 	ActionID      int
 	NumVersion    int
+	WaitJobQueues	map[string][]string
+	RunningJobQueues	map[string][]string
+	ResourceList	map[string]string
+	TriggerTime		map[string]map[string]time.Time
+	ModelList		map[string]Model
+	IncarnationNum	int
 }
 
 type FileInfo struct {
@@ -87,7 +95,7 @@ type SDFSClient struct {
 var SdfsClient SDFSClient
 
 func InitSDFS() {
-	fmt.Printf("init sdfs\n")
+	// fmt.Printf("init sdfs\n")
 	SdfsClient.MasterTable = make(map[string]FileAddr)
 	SdfsClient.LocalTable = make(map[string]FileAddr)
 	SdfsClient.VersionTable = make(map[string][]FileInfo)
@@ -173,7 +181,7 @@ func (sdfs *SDFSClient) PeriodicalCheckResource() {
 				sdfs.MasterMutex.Unlock()
 				for _, addr := range newAddrs {
 					for _, fileAddr := range fileNodes {
-						fmt.Printf("call %s to sent file %s to %s.\n", fileAddr, k, addr)
+						// fmt.Printf("call %s to sent file %s to %s.\n", fileAddr, k, addr)
 						err := sdfs.SendFileReq(fileAddr, k, addr, sdfs.MasterTable[k].StoreAddr, nil, sdfs.MasterIncarnationID, 1)
 						if err == nil {
 							sdfs.ResourceMutex.Lock()
@@ -184,7 +192,7 @@ func (sdfs *SDFSClient) PeriodicalCheckResource() {
 							}
 							sdfs.ResourceMutex.Unlock()
 							log.Printf("Peiroodical check: Send file Copy %s to node %s.\n", k, addr)
-							fmt.Printf("Peiroodical check: Send file Copy %s to node %s.\n", k, addr)
+							// fmt.Printf("Peiroodical check: Send file Copy %s to node %s.\n", k, addr)
 							break
 						}
 					}

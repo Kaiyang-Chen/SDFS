@@ -68,6 +68,10 @@ func (config *Config) GetSdfsAddr() string {
 	return MyConfig.IP + ":" + MyConfig.SdfsPort
 }
 
+func (config *Config) GetIDunnoAddr() string {
+	return MyConfig.IP + ":8890"
+}
+
 func (config *Config) IsIntroducer() bool {
 	return config.GetMyAddr() == MyConfig.IntroducerAddr || config.GetSdfsAddr() == MyConfig.IntroducerAddr
 }
