@@ -159,6 +159,8 @@ func (idunno *IDUNNOMaster) ProcessQueryRequest(){
 
 func (idunno *IDUNNOMaster) List2Deque(dict map[string][]string) map[string]deque.Deque {
 	res := make(map[string]deque.Deque)
+	res[RES50] = deque.NewDeque()
+	res[RES101] = deque.NewDeque()
 	for model, q:= range dict {
 		for _, task := range q {
 			res[model].PushBack(task)
