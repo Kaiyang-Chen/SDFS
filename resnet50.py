@@ -1,7 +1,8 @@
-from keras.applications.resnet import ResNet50
-from keras.preprocessing import image
+from keras.applications import ResNet50
+from keras import utils
 from keras.applications.resnet import preprocess_input, decode_predictions
 import numpy as np
+
 
 import sys
 
@@ -10,8 +11,8 @@ model = ResNet50(weights='imagenet')
 img_path = sys.argv[1]
 save_path = sys.argv[2]
 f = open(save_path,'w')
-img = image.load_img(img_path, target_size=(224, 224))
-x = image.img_to_array(img)
+img = utils.load_img(img_path, target_size=(224, 224))
+x = utils.img_to_array(img)
 x = np.expand_dims(x, axis=0)
 x = preprocess_input(x)
 

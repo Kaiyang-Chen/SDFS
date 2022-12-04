@@ -13,10 +13,9 @@ import (
 type InferenceService struct{}
 
 
-
 func (is *InferenceService) Inference(args *Args, reply *string) error {
 	// SdfsClient.GetFile(args.LocalName, args.SdfsName)
-	var cmd = exec.Command("python3", args.ModelPath, args.InputPath, args.OutputPath)
+	var cmd = exec.Command("python3.9", args.ModelPath, args.InputPath, args.OutputPath)
 	var res []byte
 	var err error
 	res, err = cmd.CombinedOutput()
