@@ -395,11 +395,21 @@ func (idunno *IDUNNOMaster) RollBackRunq() {
 	}
 }
 
+func (idunno *IDUNNOMaster) GetComputeNode(taskName string) string {
+	for k, v := range idunno.ResourceTable {
+		if v == taskName {
+			return k
+		}
+	}
+	return ""
+}
 
 func (idunno *IDUNNOMaster) RollBackQuery(model string, queryName string, taskName string) {
 	idunno.DeleteRunQ(model, taskName)
 	idunno.PushWaitQ(model, queryName, false)
 	idunno.DeleteTriggerT(model, taskName)
+	targetAddr := idunno.GetComputeNode(taskName)
+	idunno.ChangeResourceTable(targetAddr, taskName, true)
 }
 
 
