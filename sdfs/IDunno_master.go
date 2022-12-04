@@ -327,11 +327,15 @@ func (idunno *IDUNNOMaster) DoInference(targetAddr string, model string, queryNa
 	}
 	args := Args{"/home/kc68/SDFS/dataset/"+queryName, "/home/kc68/files/"+taskName+"_out", modelPath}
 	client, err := rpc.Dial("tcp", targetAddr)
-	defer client.Close()
 	if err != nil {
 		log.Println("dialing:", err)
 		return err
 	}
+	defer func() {
+		if client != nil {
+			client.Close()
+		}
+	}()
 	var inferenceResult string
 	err = client.Call("InferenceService.Inference", args, &inferenceResult)
 	if err != nil {

@@ -16,3 +16,4 @@ x = preprocess_input(x)
 preds = model.predict(x)
 
 print('Predicted:', decode_predictions(preds, top=3)[0], file=f)
+print('Predicted:', decode_predictions(preds, top=3)[0])
