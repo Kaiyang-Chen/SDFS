@@ -76,14 +76,48 @@ func InitIDunnoClient(){
 	go IDunnoMaster.RegisterRpc()
 }
 
+
 func GetRecentQueryRate(ModelName string) float64 {
+	IDunnoMaster.ModelListMutex.Lock()
+	defer IDunnoMaster.ModelListMutex.Unlock()
 	count := 0
 	for _, t := range IDunnoMaster.TriggerTime[ModelName] {
-		if time.Now().Before(t.Add(2 * TIMEGRAN * time.Second)) {
+		if time.Now().Before(t.Add(TIMEGRAN * time.Second)) {
 			count++;
 		}
 	}
+	if entry, ok := IDunnoMaster.ModelList[ModelName]; ok {
+		entry.QueryRate = float64(count)/float64(TIMEGRAN)
+		IDunnoMaster.ModelList[ModelName] = entry
+	}
+
 	return float64(count)/float64(TIMEGRAN)
+}
+
+func (idunno *IDUNNOMaster) GetTruncatedModelList() map[string]Model{
+	tmpModelList := make(map[string]Model)
+	for _, m := range idunno.ModelList {
+		timeList := m.TimeList
+		if(len(timeList)>20){
+			timeList = timeList[len(timeList)-20:]
+		}
+		tmpModelList[m.ModelName] = Model{m.ModelName, timeList, m.QueryRate, m.BatchSize, m.Count,sync.RWMutex{}}
+	}
+	return tmpModelList
+}
+
+func (idunno *IDUNNOMaster) GetLatestTrigger() map[string]map[string]time.Time {
+	tmpTrigger := make(map[string]map[string]time.Time)
+	tmpTrigger[RES50] = make(map[string]time.Time)
+	tmpTrigger[RES101] = make(map[string]time.Time)
+	for _, m := range idunno.ModelList {
+		for task, t := range IDunnoMaster.TriggerTime[m.ModelName] {
+			if time.Now().Before(t.Add(TIMEGRAN * time.Second)) {
+				tmpTrigger[m.ModelName][task] = t;
+			}
+		}
+	}
+	return tmpTrigger
 }
 
 func GetRandomQuery(num int) []string {
@@ -115,9 +149,9 @@ func (idunno *IDUNNOMaster) C2() {
 		mean, _ := stats.Mean(list)
 		median, _ := stats.Median(list)
 		std, _ := stats.StandardDeviation(list)
-		p90, _ := stats.Percentile(list, 0.9)
-		p95, _ := stats.Percentile(list, 0.95)
-		p99, _ := stats.Percentile(list, 0.99)
+		p90, _ := stats.Percentile(list, 90)
+		p95, _ := stats.Percentile(list, 95)
+		p99, _ := stats.Percentile(list, 99)
 		fmt.Printf("Mean: %f; Median: %f; STD: %f; P90: %f; P95: %f; P99: %f; \n", mean, median, std, p90, p95, p99)
 	}
 }
@@ -433,9 +467,3 @@ func (idunno *IDUNNOMaster) DoScheduling(targetAddr string) {
 		idunno.DeleteRunQ(model, taskName)
 	}
 }
-
-
-// 1. handel leaving
-// 2. copy IDunno master info, hot update, if change master, undo all the working task
-// 3. rpc for inference
-// 4. cmdline
