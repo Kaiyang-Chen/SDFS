@@ -157,16 +157,14 @@ func (idunno *IDUNNOMaster) ProcessQueryRequest(){
 	}
 }
 
-func (idunno *IDUNNOMaster) List2Deque(dict map[string][]string, run bool) {
+func (idunno *IDUNNOMaster) List2Deque(dict map[string][]string) map[string]deque.Deque {
+	res := make(map[string]deque.Deque)
 	for model, q:= range dict {
 		for _, task := range q {
-			if(run){
-				idunno.RunningJobQueues[model].PushBack(task)
-			} else {
-				idunno.WaitJobQueues[model].PushBack(task)
-			}
+			res[model].PushBack(task)
 		}
 	}
+	return res
 }
 
 func (idunno *IDUNNOMaster) ShowWait()map[string][]string{

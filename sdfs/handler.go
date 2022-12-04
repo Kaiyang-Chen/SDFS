@@ -404,8 +404,8 @@ func (sdfs *SDFSClient) HandleMasterUpdate(message FileMessage) (FileMessage, er
 	sdfs.ReplicaAddr.StoreAddr = message.ReplicaAddr
 	sdfs.ReplicaAddr.NumReplica = len(message.ReplicaAddr)
 	sdfs.ResourceDistribution = message.ResourceTable
-	IDunnoMaster.List2Deque(message.WaitJobQueues, false)
-	IDunnoMaster.List2Deque(message.RunningJobQueues, true)
+	IDunnoMaster.WaitJobQueues = IDunnoMaster.List2Deque(message.WaitJobQueues)
+	IDunnoMaster.RunningJobQueues = IDunnoMaster.List2Deque(message.RunningJobQueues)
 	IDunnoMaster.ResourceTable = message.ResourceList
 	IDunnoMaster.TriggerTime = message.TriggerTime
 	IDunnoMaster.IncarnationNum = message.IncarnationNum
