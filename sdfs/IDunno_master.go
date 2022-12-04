@@ -329,7 +329,7 @@ func (idunno *IDUNNOMaster) ChangeModelList (model string, timeStart time.Time, 
 	defer idunno.ModelListMutex.Unlock()
 	if entry, ok := idunno.ModelList[model]; ok {
 		entry.TimeList = append(entry.TimeList, timeEnd.Sub(timeStart).Seconds())
-		entry.count = entry.count + 1
+		entry.Count = entry.Count + 1
 		idunno.ModelList[model] = entry
 	}
 }

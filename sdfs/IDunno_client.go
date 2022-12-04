@@ -16,9 +16,9 @@ type InferenceService struct{}
 func (is *InferenceService) Inference(args *Args, reply *string) error {
 	// SdfsClient.GetFile(args.LocalName, args.SdfsName)
 	var cmd = exec.Command("python3.9", args.ModelPath, args.InputPath, args.OutputPath)
-	// var res []byte
+	var res []byte
 	var err error
-	_, err = cmd.CombinedOutput()
+	res, err = cmd.CombinedOutput()
 	if err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func (is *InferenceService) Inference(args *Args, reply *string) error {
 	tmp := strings.Split(args.OutputPath,"/")
 	sdfsName := tmp[len(tmp)-1]
 	SdfsClient.PutFile(args.OutputPath, sdfsName)
-	*reply = "Output have been save to " + string(sdfsName) + " on sdfs.\n"
+	*reply = res
 	return nil
 }
 
