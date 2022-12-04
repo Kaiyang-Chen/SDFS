@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-const TIMEGRAN = 10
+const TIMEGRAN = 30
 const RES101 = "resnet101"
 const RES50 = "resnet50"
 
@@ -102,6 +102,7 @@ func (idunno *IDUNNOMaster) ProcessQueryRequest(){
 			queries := GetRandomQuery(m.BatchSize)
 			idunno.WaitQMutex.Lock()
 			for _, q := range queries {
+				// fmt.Println(q)
 				idunno.WaitJobQueues[m.ModelName].PushBack(q)
 			}
 			idunno.WaitQMutex.Unlock()
@@ -202,9 +203,9 @@ func (idunno *IDUNNOMaster) DeleteRunQ (model string, taskName string) {
 	idunno.RunningQMutex.Lock()
 	defer idunno.RunningQMutex.Unlock()
 	for i, n := 0, idunno.RunningJobQueues[model].Len(); i < n; i++ {
-		tmp := idunno.WaitJobQueues[model].PopFront()
+		tmp := idunno.RunningJobQueues[model].PopFront()
 		if(tmp != taskName){
-			idunno.WaitJobQueues[model].PushBack(tmp)
+			idunno.RunningJobQueues[model].PushBack(tmp)
 		}
 	}
 }
@@ -280,6 +281,7 @@ func (idunno *IDUNNOMaster) DoInference(targetAddr string, model string, queryNa
 	}
 	args := Args{"/home/kc68/SDFS/dataset/"+queryName, "/home/kc68/files/"+taskName+"_out", modelPath}
 	client, err := rpc.Dial("tcp", targetAddr)
+	defer client.Close()
 	if err != nil {
 		log.Println("dialing:", err)
 		return err
@@ -304,7 +306,12 @@ func (idunno *IDUNNOMaster) DoScheduling(targetAddr string) {
 	} else if (GetRecentQueryRate(RES101) > GetRecentQueryRate(RES50) && !idunno.WaitJobQueues[RES50].Empty()){
 		model = RES50
 	} else if (GetRecentQueryRate(RES101) == GetRecentQueryRate(RES50)){
-		model = RES50
+		if(!idunno.WaitJobQueues[RES101].Empty()){
+			model = RES101
+		} else if(!idunno.WaitJobQueues[RES50].Empty()){
+			model = RES50
+		}
+
 	}
 	// fmt.Println(model)
 	if model != "" {
@@ -330,6 +337,7 @@ func (idunno *IDUNNOMaster) DoScheduling(targetAddr string) {
 		timeEnd := time.Now()
 		idunno.ChangeModelList(model, timeStart, timeEnd)
 		idunno.ChangeResourceTable(targetAddr, taskName, true)
+		idunno.DeleteRunQ(model, taskName)
 	}
 }
 
