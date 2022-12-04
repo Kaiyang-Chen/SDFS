@@ -46,7 +46,7 @@ type Model struct {
 	TimeList	[]float64 
 	QueryRate	float64
 	BatchSize	int
-	count		int
+	Count		int
 	ModelMutex 	sync.RWMutex
 }
 
@@ -102,7 +102,7 @@ func (idunno *IDUNNOMaster) C1() {
 	for _, m := range idunno.ModelList {
 		fmt.Println(m.ModelName)
 		fmt.Println(GetRecentQueryRate(m.ModelName))
-		fmt.Println(m.count)
+		fmt.Println(m.Count)
 		fmt.Printf("\n")
 	}
 }
