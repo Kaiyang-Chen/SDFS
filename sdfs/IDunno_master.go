@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-const TIMEGRAN = 30
+const TIMEGRAN = 10
 const RES101 = "resnet101"
 const RES50 = "resnet50"
 
