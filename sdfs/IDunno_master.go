@@ -169,20 +169,24 @@ func (idunno *IDUNNOMaster) List2Deque(dict map[string][]string) map[string]dequ
 	return res
 }
 
-func (idunno *IDUNNOMaster) ShowWait()map[string][]string{
+func (idunno *IDUNNOMaster) ShowWait(show bool)map[string][]string{
 	res := make(map[string][]string)
 	for _, m := range idunno.ModelList {
-		fmt.Println(m.ModelName)
+		if show {
+			fmt.Println(m.ModelName)
+		}
 		var tmpQ []string
 		for i, n := 0, idunno.WaitJobQueues[m.ModelName].Len(); i < n; i++ {
 			tmp, _ := idunno.WaitJobQueues[m.ModelName].PopFront().(string)
 			// tmp := idunno.WaitJobQueues[m.ModelName].PopFront()
-			fmt.Println(tmp)
+			if show {
+				fmt.Println(tmp)
+			}
 			tmpQ = append(tmpQ, tmp)
 			idunno.WaitJobQueues[m.ModelName].PushBack(tmp)
 		}
 		res[m.ModelName] = tmpQ
-		fmt.Printf("\n")
+		// fmt.Printf("\n")
 	}
 	return res;
 }
@@ -194,19 +198,24 @@ func (idunno *IDUNNOMaster) ShowResourceTable() {
 	}
 }
 
-func (idunno *IDUNNOMaster) ShowRun() map[string][]string{
+func (idunno *IDUNNOMaster) ShowRun(show bool) map[string][]string{
 	res := make(map[string][]string)
 	for _, m := range idunno.ModelList {
+		if show {
+			fmt.Println(m.ModelName)
+		}
 		var tmpQ []string
 		for i, n := 0, idunno.RunningJobQueues[m.ModelName].Len(); i < n; i++ {
 			tmp, _ := idunno.RunningJobQueues[m.ModelName].PopFront().(string)
 			// tmp := idunno.RunningJobQueues[m.ModelName].PopFront()
-			fmt.Println(tmp)
+			if show {
+				fmt.Println(tmp)
+			}
 			tmpQ = append(tmpQ, tmp)
 			idunno.RunningJobQueues[m.ModelName].PushBack(tmp)
 		}
 		res[m.ModelName] = tmpQ
-		fmt.Printf("\n")
+		// fmt.Printf("\n")
 	}
 	return res;
 }

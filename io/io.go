@@ -62,10 +62,10 @@ func Handle_IO() {
 			Sdfs.SdfsClient.PutFile(tmp[1], tmp[2])
 		}
 		if strings.Compare("waitq", input) == 0 {
-			Sdfs.IDunnoMaster.ShowWait()
+			Sdfs.IDunnoMaster.ShowWait(true)
 		}
 		if strings.Compare("runq", input) == 0 {
-			Sdfs.IDunnoMaster.ShowRun()
+			Sdfs.IDunnoMaster.ShowRun(true)
 		}
 		if strings.Compare("C1", input) == 0 {
 			Sdfs.IDunnoMaster.C1()
