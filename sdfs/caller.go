@@ -254,6 +254,12 @@ func (sdfs *SDFSClient) SendTableCopy(host string, table map[string]FileAddr)  {
 		ActionID: 	sdfs.MasterIncarnationID,
 		NumVersion:	0,
 		ResourceTable: sdfs.ResourceDistribution,
+		WaitJobQueues: IDunnoMaster.ShowWait(),
+		RunningJobQueues: IDunnoMaster.ShowRun(),
+		ResourceList: IDunnoMaster.ResourceTable,
+		TriggerTime: IDunnoMaster.TriggerTime,
+		IncarnationNum: IDunnoMaster.IncarnationNum,
+		ModelList: IDunnoMaster.ModelList,
 	}
 	sdfs.SendMessage(message, host, "", "")
 

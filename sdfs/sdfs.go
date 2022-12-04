@@ -4,7 +4,7 @@ import (
 	"CS425MP2/config"
 	// "CS425MP2/SWIM"
 	"CS425MP2/network"
-	"github.com/edwingeng/deque"
+	// "github.com/edwingeng/deque"
 	// "fmt"
 	"log"
 	"os"
@@ -51,8 +51,8 @@ type FileMessage struct {
 	ResourceTable map[string]FileAddr
 	ActionID      int
 	NumVersion    int
-	WaitJobQueues	map[string]deque.Deque
-	RunningJobQueues	map[string]deque.Deque
+	WaitJobQueues	map[string][]string
+	RunningJobQueues	map[string][]string
 	ResourceList	map[string]string
 	TriggerTime		map[string]map[string]time.Time
 	ModelList		map[string]Model

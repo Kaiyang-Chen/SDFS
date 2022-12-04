@@ -157,16 +157,34 @@ func (idunno *IDUNNOMaster) ProcessQueryRequest(){
 	}
 }
 
-func (idunno *IDUNNOMaster) ShowWait(){
+func (idunno *IDUNNOMaster) List2Deque(dict map[string][]string, run bool) {
+	for model, q:= range dict {
+		for _, task := range q {
+			if(run){
+				idunno.RunningJobQueues[model].PushBack(task)
+			} else {
+				idunno.WaitJobQueues[model].PushBack(task)
+			}
+		}
+	}
+}
+
+func (idunno *IDUNNOMaster) ShowWait()map[string][]string{
+	res := make(map[string][]string)
 	for _, m := range idunno.ModelList {
 		fmt.Println(m.ModelName)
+		var tmpQ []string
 		for i, n := 0, idunno.WaitJobQueues[m.ModelName].Len(); i < n; i++ {
-			tmp := idunno.WaitJobQueues[m.ModelName].PopFront()
+			tmp, _ := idunno.WaitJobQueues[m.ModelName].PopFront().(string)
+			// tmp := idunno.WaitJobQueues[m.ModelName].PopFront()
 			fmt.Println(tmp)
+			tmpQ = append(tmpQ, tmp)
 			idunno.WaitJobQueues[m.ModelName].PushBack(tmp)
 		}
+		res[m.ModelName] = tmpQ
 		fmt.Printf("\n")
 	}
+	return res;
 }
 
 func (idunno *IDUNNOMaster) ShowResourceTable() {
@@ -176,15 +194,21 @@ func (idunno *IDUNNOMaster) ShowResourceTable() {
 	}
 }
 
-func (idunno *IDUNNOMaster) ShowRun(){
+func (idunno *IDUNNOMaster) ShowRun() map[string][]string{
+	res := make(map[string][]string)
 	for _, m := range idunno.ModelList {
+		var tmpQ []string
 		for i, n := 0, idunno.RunningJobQueues[m.ModelName].Len(); i < n; i++ {
-			tmp := idunno.RunningJobQueues[m.ModelName].PopFront()
+			tmp, _ := idunno.RunningJobQueues[m.ModelName].PopFront().(string)
+			// tmp := idunno.RunningJobQueues[m.ModelName].PopFront()
 			fmt.Println(tmp)
+			tmpQ = append(tmpQ, tmp)
 			idunno.RunningJobQueues[m.ModelName].PushBack(tmp)
 		}
+		res[m.ModelName] = tmpQ
 		fmt.Printf("\n")
 	}
+	return res;
 }
 
 
