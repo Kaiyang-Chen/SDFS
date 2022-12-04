@@ -12,6 +12,8 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"os/exec"
+	"github.com/montanaflynn/stats"
 )
 
 const TIMEGRAN = 10
@@ -94,6 +96,50 @@ func GetRandomQuery(num int) []string {
 		res = append(res, files[rand_permutation[i]].Name())
     }
 	return res;
+}
+
+func (idunno *IDUNNOMaster) C1() {
+	for _, m := range idunno.ModelList {
+		fmt.Println(m.ModelName)
+		fmt.Println(GetRecentQueryRate(m.ModelName))
+		fmt.Println(m.count)
+		fmt.Printf("\n")
+	}
+}
+
+func (idunno *IDUNNOMaster) C2() {
+	for _, m := range idunno.ModelList {
+		fmt.Println(m.ModelName)
+		list := m.TimeList
+		mean, _ := stats.Mean(list)
+		median, _ := stats.Median(list)
+		std, _ := stats.StandardDeviation(list)
+		p90, _ := stats.Percentile(list, 0.9)
+		p95, _ := stats.Percentile(list, 0.95)
+		p99, _ := stats.Percentile(list, 0.99)
+		fmt.Printf("Mean: %f; Median: %f; STD: %f; P90: %f; P95: %f; P99: %f; \n", mean, median, std, p90, p95, p99)
+	}
+}
+
+func (idunno *IDUNNOMaster) C3(model string, batchSize int) {
+	idunno.ModelListMutex.Lock()
+	defer idunno.ModelListMutex.Unlock()
+	if entry, ok := idunno.ModelList[model]; ok {
+		entry.BatchSize = batchSize
+		idunno.ModelList[model] = entry
+	}
+}
+
+func (idunno *IDUNNOMaster) C4(taskName string) {
+	sdfsName := taskName + "-out"
+	SdfsClient.GetFile("/home/kc68/files/"+sdfsName, sdfsName)
+	var cmd = exec.Command("cat", "/home/kc68/files/"+sdfsName)
+	res, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(string(res))
+	}
 }
 
 func (idunno *IDUNNOMaster) ProcessQueryRequest(){
