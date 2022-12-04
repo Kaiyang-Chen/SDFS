@@ -1,19 +1,19 @@
 package Sdfs
 
 import (
-	"fmt"
-	"net/rpc"
 	"CS425MP2/config"
-	"sync"
-	"time"
+	"fmt"
 	"github.com/edwingeng/deque"
-	"math/rand"
-	"log"
+	"github.com/montanaflynn/stats"
 	"io/ioutil"
+	"log"
+	"math/rand"
+	"net/rpc"
+	"os/exec"
 	"strconv"
 	"strings"
-	"os/exec"
-	"github.com/montanaflynn/stats"
+	"sync"
+	"time"
 )
 
 const TIMEGRAN = 10
@@ -21,38 +21,38 @@ const RES101 = "resnet101"
 const RES50 = "resnet50"
 
 type Args struct {
-	InputPath   string
-	OutputPath  string
+	InputPath  string
+	OutputPath string
 	ModelPath  string
 }
 
-type IDUNNOMaster struct{
-	WaitJobQueues	map[string]deque.Deque
-	RunningJobQueues	map[string]deque.Deque
-	ResourceTable	map[string]string
-	TriggerTime		map[string]map[string]time.Time
-	IncarnationNum	int
-	ModelList		map[string]Model
-	ResourceMutex	sync.RWMutex
-	IDMutex			sync.RWMutex
-	WaitQMutex		sync.RWMutex
-	RunningQMutex	sync.RWMutex
-	ModelListMutex	sync.RWMutex
-	TriggerMutex	sync.RWMutex
+type IDUNNOMaster struct {
+	WaitJobQueues    map[string]deque.Deque
+	RunningJobQueues map[string]deque.Deque
+	ResourceTable    map[string]string
+	TriggerTime      map[string]map[string]time.Time
+	IncarnationNum   int
+	ModelList        map[string]Model
+	ResourceMutex    sync.RWMutex
+	IDMutex          sync.RWMutex
+	WaitQMutex       sync.RWMutex
+	RunningQMutex    sync.RWMutex
+	ModelListMutex   sync.RWMutex
+	TriggerMutex     sync.RWMutex
 }
 
 type Model struct {
-	ModelName	string
-	TimeList	[]float64 
-	QueryRate	float64
-	BatchSize	int
-	count		int
-	ModelMutex 	sync.RWMutex
+	ModelName  string
+	TimeList   []float64
+	QueryRate  float64
+	BatchSize  int
+	count      int
+	ModelMutex sync.RWMutex
 }
 
 var IDunnoMaster IDUNNOMaster
 
-func InitIDunnoClient(){
+func InitIDunnoClient() {
 	IDunnoMaster.WaitJobQueues = make(map[string]deque.Deque)
 	IDunnoMaster.WaitJobQueues[RES50] = deque.NewDeque()
 	IDunnoMaster.WaitJobQueues[RES101] = deque.NewDeque()
@@ -79,23 +79,23 @@ func GetRecentQueryRate(ModelName string) float64 {
 	count := 0
 	for _, t := range IDunnoMaster.TriggerTime[ModelName] {
 		if time.Now().Before(t.Add(2 * TIMEGRAN * time.Second)) {
-			count++;
+			count++
 		}
 	}
-	return float64(count)/float64(TIMEGRAN)
+	return float64(count) / float64(TIMEGRAN)
 }
 
 func GetRandomQuery(num int) []string {
-	files, err := ioutil.ReadDir("/home/kc68/SDFS/dataset/")
-    if err != nil {
-        log.Fatal(err)
-    }
+	files, err := ioutil.ReadDir("/home/kaining6/SDFS/dataset/")
+	if err != nil {
+		log.Fatal(err)
+	}
 	rand_permutation := rand.Perm(len(files))
 	var res []string
 	for i := 0; i < num; i++ {
 		res = append(res, files[rand_permutation[i]].Name())
-    }
-	return res;
+	}
+	return res
 }
 
 func (idunno *IDUNNOMaster) C1() {
@@ -132,8 +132,8 @@ func (idunno *IDUNNOMaster) C3(model string, batchSize int) {
 
 func (idunno *IDUNNOMaster) C4(taskName string) {
 	sdfsName := taskName + "_out"
-	SdfsClient.GetFile("/home/kc68/files/"+sdfsName, sdfsName)
-	var cmd = exec.Command("cat", "/home/kc68/files/"+sdfsName)
+	SdfsClient.GetFile("/home/kaining6/files/"+sdfsName, sdfsName)
+	var cmd = exec.Command("cat", "/home/kaining6/files/"+sdfsName)
 	res, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Println(err)
@@ -142,8 +142,8 @@ func (idunno *IDUNNOMaster) C4(taskName string) {
 	}
 }
 
-func (idunno *IDUNNOMaster) ProcessQueryRequest(){
-	for{
+func (idunno *IDUNNOMaster) ProcessQueryRequest() {
+	for {
 		for _, m := range idunno.ModelList {
 			queries := GetRandomQuery(m.BatchSize)
 			idunno.WaitQMutex.Lock()
@@ -161,7 +161,7 @@ func (idunno *IDUNNOMaster) List2Deque(dict map[string][]string) map[string]dequ
 	res := make(map[string]deque.Deque)
 	res[RES50] = deque.NewDeque()
 	res[RES101] = deque.NewDeque()
-	for model, q:= range dict {
+	for model, q := range dict {
 		for _, task := range q {
 			res[model].PushBack(task)
 		}
@@ -169,7 +169,7 @@ func (idunno *IDUNNOMaster) List2Deque(dict map[string][]string) map[string]dequ
 	return res
 }
 
-func (idunno *IDUNNOMaster) ShowWait(show bool)map[string][]string{
+func (idunno *IDUNNOMaster) ShowWait(show bool) map[string][]string {
 	res := make(map[string][]string)
 	for _, m := range idunno.ModelList {
 		if show {
@@ -188,7 +188,7 @@ func (idunno *IDUNNOMaster) ShowWait(show bool)map[string][]string{
 		res[m.ModelName] = tmpQ
 		// fmt.Printf("\n")
 	}
-	return res;
+	return res
 }
 
 func (idunno *IDUNNOMaster) ShowResourceTable() {
@@ -198,7 +198,7 @@ func (idunno *IDUNNOMaster) ShowResourceTable() {
 	}
 }
 
-func (idunno *IDUNNOMaster) ShowRun(show bool) map[string][]string{
+func (idunno *IDUNNOMaster) ShowRun(show bool) map[string][]string {
 	res := make(map[string][]string)
 	for _, m := range idunno.ModelList {
 		if show {
@@ -217,16 +217,15 @@ func (idunno *IDUNNOMaster) ShowRun(show bool) map[string][]string{
 		res[m.ModelName] = tmpQ
 		// fmt.Printf("\n")
 	}
-	return res;
+	return res
 }
 
-
-func (idunno *IDUNNOMaster) Scheduler(){
+func (idunno *IDUNNOMaster) Scheduler() {
 	for {
 		tmp := idunno.ResourceTable
-		for node, task := range tmp{
+		for node, task := range tmp {
 			if task == "" {
-				if(!idunno.WaitJobQueues[RES50].Empty() || !idunno.WaitJobQueues[RES101].Empty()) {
+				if !idunno.WaitJobQueues[RES50].Empty() || !idunno.WaitJobQueues[RES101].Empty() {
 					go idunno.DoScheduling(node)
 				}
 			}
@@ -242,89 +241,86 @@ func (idunno *IDUNNOMaster) IncreaseIncarnationNum() {
 	// fmt.Println(idunno.IncarnationNum)
 }
 
-func (idunno *IDUNNOMaster) PushRunQ (model string, taskName string, tail bool) {
+func (idunno *IDUNNOMaster) PushRunQ(model string, taskName string, tail bool) {
 	idunno.RunningQMutex.Lock()
 	defer idunno.RunningQMutex.Unlock()
-	if (tail) {
+	if tail {
 		idunno.RunningJobQueues[model].PushBack(taskName)
 	} else {
 		idunno.RunningJobQueues[model].PushFront(taskName)
 	}
-	
+
 }
 
-func (idunno *IDUNNOMaster) PushWaitQ (model string, taskName string, tail bool) {
+func (idunno *IDUNNOMaster) PushWaitQ(model string, taskName string, tail bool) {
 	idunno.WaitQMutex.Lock()
 	defer idunno.WaitQMutex.Unlock()
-	if (tail) {
+	if tail {
 		idunno.WaitJobQueues[model].PushBack(taskName)
 	} else {
 		idunno.WaitJobQueues[model].PushFront(taskName)
 	}
-	
+
 }
 
-func (idunno *IDUNNOMaster) PopWaitQ (model string) string{
+func (idunno *IDUNNOMaster) PopWaitQ(model string) string {
 	idunno.WaitQMutex.Lock()
 	defer idunno.WaitQMutex.Unlock()
 	res, _ := idunno.WaitJobQueues[model].PopFront().(string)
 	return res
 }
 
-func (idunno *IDUNNOMaster) PopRunQ (model string) string{
+func (idunno *IDUNNOMaster) PopRunQ(model string) string {
 	idunno.RunningQMutex.Lock()
 	defer idunno.RunningQMutex.Unlock()
 	res, _ := idunno.RunningJobQueues[model].PopFront().(string)
 	return res
 }
 
-func (idunno *IDUNNOMaster) DeleteRunQ (model string, taskName string) {
+func (idunno *IDUNNOMaster) DeleteRunQ(model string, taskName string) {
 	idunno.RunningQMutex.Lock()
 	defer idunno.RunningQMutex.Unlock()
 	for i, n := 0, idunno.RunningJobQueues[model].Len(); i < n; i++ {
 		tmp := idunno.RunningJobQueues[model].PopFront()
-		if(tmp != taskName){
+		if tmp != taskName {
 			idunno.RunningJobQueues[model].PushBack(tmp)
 		}
 	}
 }
 
-func (idunno *IDUNNOMaster) PushTriggerT (model string, taskName string, timeStart time.Time) {
+func (idunno *IDUNNOMaster) PushTriggerT(model string, taskName string, timeStart time.Time) {
 	idunno.TriggerMutex.Lock()
 	defer idunno.TriggerMutex.Unlock()
 	idunno.TriggerTime[model][taskName] = timeStart
 }
 
-func (idunno *IDUNNOMaster) DeleteTriggerT (model string, taskName string) {
+func (idunno *IDUNNOMaster) DeleteTriggerT(model string, taskName string) {
 	idunno.TriggerMutex.Lock()
 	defer idunno.TriggerMutex.Unlock()
 	delete(idunno.TriggerTime[model], taskName)
 }
 
-
-func (idunno *IDUNNOMaster) ChangeResourceTable (targetAddr string, taskName string, delete bool) string {
+func (idunno *IDUNNOMaster) ChangeResourceTable(targetAddr string, taskName string, delete bool) string {
 	idunno.ResourceMutex.Lock()
 	defer idunno.ResourceMutex.Unlock()
 	res := idunno.ResourceTable[targetAddr]
-	if(delete) {
+	if delete {
 		idunno.ResourceTable[targetAddr] = ""
 	} else {
 		idunno.ResourceTable[targetAddr] = taskName
 	}
-	return res;
+	return res
 }
 
-
-func (idunno *IDUNNOMaster) DeleteResourceTable (targetAddr string) string {
+func (idunno *IDUNNOMaster) DeleteResourceTable(targetAddr string) string {
 	idunno.ResourceMutex.Lock()
 	defer idunno.ResourceMutex.Unlock()
 	res := idunno.ResourceTable[targetAddr]
-	delete(idunno.ResourceTable, targetAddr)	
-	return res;
+	delete(idunno.ResourceTable, targetAddr)
+	return res
 }
 
-
-func (idunno *IDUNNOMaster) ChangeModelList (model string, timeStart time.Time, timeEnd time.Time) {
+func (idunno *IDUNNOMaster) ChangeModelList(model string, timeStart time.Time, timeEnd time.Time) {
 	idunno.ModelListMutex.Lock()
 	defer idunno.ModelListMutex.Unlock()
 	if entry, ok := idunno.ModelList[model]; ok {
@@ -336,13 +332,12 @@ func (idunno *IDUNNOMaster) ChangeModelList (model string, timeStart time.Time, 
 
 func (idunno *IDUNNOMaster) HandleLeaving(addr string) {
 	taskName := idunno.DeleteResourceTable(addr)
-	if (taskName != "") {
+	if taskName != "" {
 		queryName := strings.Split(taskName, "-")[0]
 		model := strings.Split(taskName, "-")[2]
 		idunno.RollBackQuery(model, queryName, taskName)
 	}
 }
-
 
 func (idunno *IDUNNOMaster) RollBackQuery(model string, queryName string, taskName string) {
 	idunno.DeleteRunQ(model, taskName)
@@ -350,15 +345,14 @@ func (idunno *IDUNNOMaster) RollBackQuery(model string, queryName string, taskNa
 	idunno.DeleteTriggerT(model, taskName)
 }
 
-
 func (idunno *IDUNNOMaster) DoInference(targetAddr string, model string, queryName string, taskName string) error {
 	var modelPath string
-	if(model == RES50) {
-		modelPath = "/home/kc68/SDFS/resnet50.py"
-	}else{
-		modelPath = "/home/kc68/SDFS/resnet101.py"
+	if model == RES50 {
+		modelPath = "/home/kaining6/SDFS/resnet50.py"
+	} else {
+		modelPath = "/home/kaining6/SDFS/resnet101.py"
 	}
-	args := Args{"/home/kc68/SDFS/dataset/"+queryName, "/home/kc68/files/"+taskName+"_out", modelPath}
+	args := Args{"/home/kaining6/SDFS/dataset/" + queryName, "/home/kaining6/files/" + taskName + "_out", modelPath}
 	client, err := rpc.Dial("tcp", targetAddr)
 	if err != nil {
 		log.Println("dialing:", err)
@@ -373,25 +367,23 @@ func (idunno *IDUNNOMaster) DoInference(targetAddr string, model string, queryNa
 	err = client.Call("InferenceService.Inference", args, &inferenceResult)
 	if err != nil {
 		log.Println(err)
-	}else {
+	} else {
 		fmt.Println(inferenceResult)
 	}
 	return err
 }
 
-
-
 func (idunno *IDUNNOMaster) DoScheduling(targetAddr string) {
 	// fmt.Printf("DoScheduling!!\n")
 	model := ""
-	if(GetRecentQueryRate(RES50) > GetRecentQueryRate(RES101) && !idunno.WaitJobQueues[RES101].Empty()){
+	if GetRecentQueryRate(RES50) > GetRecentQueryRate(RES101) && !idunno.WaitJobQueues[RES101].Empty() {
 		model = RES101
-	} else if (GetRecentQueryRate(RES101) > GetRecentQueryRate(RES50) && !idunno.WaitJobQueues[RES50].Empty()){
+	} else if GetRecentQueryRate(RES101) > GetRecentQueryRate(RES50) && !idunno.WaitJobQueues[RES50].Empty() {
 		model = RES50
-	} else if (GetRecentQueryRate(RES101) == GetRecentQueryRate(RES50)){
-		if(!idunno.WaitJobQueues[RES101].Empty()){
+	} else if GetRecentQueryRate(RES101) == GetRecentQueryRate(RES50) {
+		if !idunno.WaitJobQueues[RES101].Empty() {
 			model = RES101
-		} else if(!idunno.WaitJobQueues[RES50].Empty()){
+		} else if !idunno.WaitJobQueues[RES50].Empty() {
 			model = RES50
 		}
 
@@ -399,7 +391,7 @@ func (idunno *IDUNNOMaster) DoScheduling(targetAddr string) {
 	// fmt.Println(model)
 	if model != "" {
 		idunno.IncreaseIncarnationNum()
-		queryName := idunno.PopWaitQ(model) 
+		queryName := idunno.PopWaitQ(model)
 		taskName := queryName + "-" + strconv.Itoa(idunno.IncarnationNum) + "-" + model
 		idunno.PushRunQ(model, taskName, true)
 		timeStart := time.Now()
@@ -416,14 +408,13 @@ func (idunno *IDUNNOMaster) DoScheduling(targetAddr string) {
 		} else {
 			fmt.Printf("Query %s finished.\n", taskName)
 		}
-		
+
 		timeEnd := time.Now()
 		idunno.ChangeModelList(model, timeStart, timeEnd)
 		idunno.ChangeResourceTable(targetAddr, taskName, true)
 		idunno.DeleteRunQ(model, taskName)
 	}
 }
-
 
 // 1. handel leaving
 // 2. copy IDunno master info, hot update, if change master, undo all the working task

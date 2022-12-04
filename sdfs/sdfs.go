@@ -15,7 +15,7 @@ import (
 
 const MASTERCOPYNUM = 3
 const COPYNUM = 4
-const PathPrefix = "/home/kc68/files/"
+const PathPrefix = "/home/kaining6/files/"
 
 // Type of message in sdfs
 const (
@@ -34,7 +34,6 @@ const (
 	SETLEADER     = 12
 )
 
-
 type FileAddr struct {
 	NumReplica int
 	StoreAddr  []string
@@ -45,18 +44,18 @@ type FileMessage struct {
 	MessageType int
 	TargetAddr  string
 	// TODO File sender datatype
-	FileName      string
-	ReplicaAddr   []string
-	CopyTable     map[string]FileAddr
-	ResourceTable map[string]FileAddr
-	ActionID      int
-	NumVersion    int
-	WaitJobQueues	map[string][]string
-	RunningJobQueues	map[string][]string
-	ResourceList	map[string]string
-	TriggerTime		map[string]map[string]time.Time
-	ModelList		map[string]Model
-	IncarnationNum	int
+	FileName         string
+	ReplicaAddr      []string
+	CopyTable        map[string]FileAddr
+	ResourceTable    map[string]FileAddr
+	ActionID         int
+	NumVersion       int
+	WaitJobQueues    map[string][]string
+	RunningJobQueues map[string][]string
+	ResourceList     map[string]string
+	TriggerTime      map[string]map[string]time.Time
+	ModelList        map[string]Model
+	IncarnationNum   int
 }
 
 type FileInfo struct {
