@@ -61,7 +61,7 @@ func HandleSdfsMessage(request []byte) (bool, string, []byte) {
 
 func (sdfs *SDFSClient) HandleFileSent(message FileMessage) (bool, string, []byte) {
 	log.Printf("[HandleFileSent]: message=%v", message)
-	fmt.Printf("[HandleFileSent]: message=%v", message)
+	// fmt.Printf("[HandleFileSent]: message=%v", message)
 	if message.ReplicaAddr == nil {
 		var localFilePath string
 		for key := range message.CopyTable {
@@ -111,7 +111,7 @@ func (sdfs *SDFSClient) allocateAddr(num int) []string {
 
 func (sdfs *SDFSClient) HandleSetLeader(message FileMessage) (FileMessage, error) {
 	log.Printf("[HandleSetLeader]: message=%v", message)
-	fmt.Printf("[HandleSetLeader]: message=%v", message)
+	// fmt.Printf("[HandleSetLeader]: message=%v", message)
 	config.MyConfig.ChangeLeader(message.FileName)
 	var reply FileMessage
 	reply = FileMessage{
@@ -130,7 +130,7 @@ func (sdfs *SDFSClient) HandleSetLeader(message FileMessage) (FileMessage, error
 
 func (sdfs *SDFSClient) HandleDeleteFile(message FileMessage) (FileMessage, error) {
 	log.Printf("[HandleDeleteFile]: message=%v", message)
-	fmt.Printf("[HandleDeleteFile]: message=%v", message)
+	// fmt.Printf("[HandleDeleteFile]: message=%v", message)
 	sdfs.LocalMutex.Lock()
 	defer sdfs.LocalMutex.Unlock()
 	delete(sdfs.LocalTable, message.FileName)
@@ -154,7 +154,7 @@ func (sdfs *SDFSClient) HandleDeleteFile(message FileMessage) (FileMessage, erro
 
 func (sdfs *SDFSClient) HandleListFile(message FileMessage) (FileMessage, error) {
 	log.Printf("[HandleListFile]: message=%v", message)
-	fmt.Printf("[HandleListFile]: message=%v", message)
+	// fmt.Printf("[HandleListFile]: message=%v", message)
 	var reply FileMessage
 	if _, ok := sdfs.MasterTable[message.FileName]; !ok {
 		reply = FileMessage{
@@ -187,7 +187,7 @@ func (sdfs *SDFSClient) HandleListFile(message FileMessage) (FileMessage, error)
 
 func (sdfs *SDFSClient) HandleDeleteFileReq(message FileMessage) (FileMessage, error) {
 	log.Printf("[HandleGetFileReq]: message=%v", message)
-	fmt.Printf("[HandleGetFileReq]: message=%v", message)
+	// fmt.Printf("[HandleGetFileReq]: message=%v", message)
 	var reply FileMessage
 	if _, ok := sdfs.MasterTable[message.FileName]; !ok {
 		reply = FileMessage{
@@ -267,7 +267,7 @@ func (sdfs *SDFSClient) HandleDeleteFileReq(message FileMessage) (FileMessage, e
 
 func (sdfs *SDFSClient) HandleGetFileReq(message FileMessage) (FileMessage, error) {
 	log.Printf("[HandleGetFileReq]: message=%v", message)
-	fmt.Printf("[HandleGetFileReq]: message=%v", message)
+	// fmt.Printf("[HandleGetFileReq]: message=%v", message)
 	var err error
 	// Future work: compare and return the newest version of file
 	for _, addr := range sdfs.MasterTable[message.FileName].StoreAddr {
@@ -293,7 +293,7 @@ func (sdfs *SDFSClient) HandleGetFileReq(message FileMessage) (FileMessage, erro
 
 func (sdfs *SDFSClient) HandleGetVersionsFileReq(message FileMessage) (FileMessage, error) {
 	log.Printf("[HandleGetFileReq]: message=%v", message)
-	fmt.Printf("[HandleGetFileReq]: message=%v", message)
+	// fmt.Printf("[HandleGetFileReq]: message=%v", message)
 	var err error
 	for _, addr := range sdfs.MasterTable[message.FileName].StoreAddr {
 		err = sdfs.SendFileReq(addr, message.FileName, message.TargetAddr, message.ReplicaAddr, message.CopyTable, sdfs.MasterIncarnationID, message.NumVersion)
@@ -317,7 +317,7 @@ func (sdfs *SDFSClient) HandleGetVersionsFileReq(message FileMessage) (FileMessa
 
 func (sdfs *SDFSClient) HandleFileSentReq(message FileMessage) (FileMessage, error) {
 	log.Printf("[HandleFileSentReq]: message=%v", message)
-	fmt.Printf("[HandleFileSentReq]: message=%v", message)
+	// fmt.Printf("[HandleFileSentReq]: message=%v", message)
 	sort.Sort(FileVersion(sdfs.VersionTable[message.FileName]))
 	var filenames []string
 	numV := 1
@@ -345,7 +345,7 @@ func (sdfs *SDFSClient) HandleFileSentReq(message FileMessage) (FileMessage, err
 
 func (sdfs *SDFSClient) HandleTargetReq(message FileMessage) (FileMessage, error) {
 	log.Printf("[HandleTargetReq]: message=%v", message)
-	fmt.Printf("[HandleTargetReq]: message=%v", message)
+	// fmt.Printf("[HandleTargetReq]: message=%v", message)
 	sdfs.MasterMutex.Lock()
 	defer sdfs.MasterMutex.Unlock()
 	var reply FileMessage
@@ -353,7 +353,7 @@ func (sdfs *SDFSClient) HandleTargetReq(message FileMessage) (FileMessage, error
 	if !exist {
 		addrs := sdfs.allocateAddr(COPYNUM)
 		sdfs.MasterTable[message.FileName] = FileAddr{len(addrs), addrs}
-		fmt.Println(sdfs.MasterTable[message.FileName])
+		// fmt.Println(sdfs.MasterTable[message.FileName])
 		sdfs.ResourceMutex.Lock()
 		defer sdfs.ResourceMutex.Unlock()
 		for _, addr := range addrs {
@@ -377,7 +377,7 @@ func (sdfs *SDFSClient) HandleTargetReq(message FileMessage) (FileMessage, error
 
 	}
 	fileInfo, _ := sdfs.MasterTable[message.FileName]
-	fmt.Println(sdfs.MasterTable[message.FileName].StoreAddr)
+	// fmt.Println(sdfs.MasterTable[message.FileName].StoreAddr)
 	reply = FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: TARGETSENT,
@@ -388,7 +388,7 @@ func (sdfs *SDFSClient) HandleTargetReq(message FileMessage) (FileMessage, error
 		ActionID:    sdfs.MasterIncarnationID,
 		NumVersion:  0,
 	}
-	fmt.Printf("[HandleTargetReqReply]: message=%v", reply)
+	// fmt.Printf("[HandleTargetReqReply]: message=%v", reply)
 	return reply, nil
 
 }
@@ -447,7 +447,7 @@ func (sdfs *SDFSClient) HandleNewMaster() {
 	sdfs.ReplicaAddr.NumReplica = sdfs.ReplicaAddr.NumReplica - 1
 	success := make(chan bool, len(sdfs.ResourceDistribution))
 	for addr, _ := range sdfs.ResourceDistribution {
-		fmt.Printf("Updating master to %s for node  %s.\n", config.MyConfig.GetSdfsAddr(), addr)
+		// fmt.Printf("Updating master to %s for node  %s.\n", config.MyConfig.GetSdfsAddr(), addr)
 		go sdfs.SendUpdatedMaster(config.MyConfig.GetSdfsAddr(), &success, addr)
 	}
 	ok := true

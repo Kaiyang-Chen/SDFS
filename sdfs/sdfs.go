@@ -4,7 +4,7 @@ import (
 	"CS425MP2/config"
 	// "CS425MP2/SWIM"
 	"CS425MP2/network"
-	"fmt"
+	// "fmt"
 	"log"
 	"os"
 	"strings"
@@ -88,7 +88,7 @@ type SDFSClient struct {
 var SdfsClient SDFSClient
 
 func InitSDFS() {
-	fmt.Printf("init sdfs\n")
+	// fmt.Printf("init sdfs\n")
 	SdfsClient.MasterTable = make(map[string]FileAddr)
 	SdfsClient.LocalTable = make(map[string]FileAddr)
 	SdfsClient.VersionTable = make(map[string][]FileInfo)
@@ -174,7 +174,7 @@ func (sdfs *SDFSClient) PeriodicalCheckResource() {
 				sdfs.MasterMutex.Unlock()
 				for _, addr := range newAddrs {
 					for _, fileAddr := range fileNodes {
-						fmt.Printf("call %s to sent file %s to %s.\n", fileAddr, k, addr)
+						// fmt.Printf("call %s to sent file %s to %s.\n", fileAddr, k, addr)
 						err := sdfs.SendFileReq(fileAddr, k, addr, sdfs.MasterTable[k].StoreAddr, nil, sdfs.MasterIncarnationID, 1)
 						if err == nil {
 							sdfs.ResourceMutex.Lock()
@@ -185,7 +185,7 @@ func (sdfs *SDFSClient) PeriodicalCheckResource() {
 							}
 							sdfs.ResourceMutex.Unlock()
 							log.Printf("Peiroodical check: Send file Copy %s to node %s.\n", k, addr)
-							fmt.Printf("Peiroodical check: Send file Copy %s to node %s.\n", k, addr)
+							// fmt.Printf("Peiroodical check: Send file Copy %s to node %s.\n", k, addr)
 							break
 						}
 					}

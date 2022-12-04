@@ -21,7 +21,7 @@ func (sdfs *SDFSClient) SendMessage(request FileMessage, host string, filePath s
 }
 
 func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, success *chan bool, repAddr []string, copyTable map[string]FileAddr, IncarID int, Type int) (FileMessage, error){
-	fmt.Printf("Sending file %s.\n", sdfsName)
+	// fmt.Printf("Sending file %s.\n", sdfsName)
 	message := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: FILESENT,
@@ -194,7 +194,7 @@ func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 		ResourceTable: nil,
 	}
 	reply, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", sdfsName)
-	fmt.Printf("[AckHandleTargetReq]: message=%v", reply)
+	// fmt.Printf("[AckHandleTargetReq]: message=%v", reply)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -213,7 +213,7 @@ func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 		fmt.Println("Failed putting file\n")
 	} else{
 		log.Println("Succeed putting file\n")
-		fmt.Println("Succeed putting file\n")
+		// fmt.Println("Succeed putting file\n")
 	}
 	return nil
 
