@@ -18,11 +18,11 @@ func (is *InferenceService) Inference(args *Args, reply *string) error {
 	var cmd = exec.Command("python3.9", args.ModelPath, args.InputPath, args.OutputPath)
 	var res []byte
 	var err error
-	res, err = cmd.CombinedOutput()
+	_, err = cmd.CombinedOutput()
 	if err != nil {
 		return err
 	}
-	fmt.Println(res)
+	// fmt.Println(res)
 	tmp := strings.Split(args.OutputPath,"/")
 	sdfsName := tmp[len(tmp)-1]
 	SdfsClient.PutFile(args.OutputPath, sdfsName)

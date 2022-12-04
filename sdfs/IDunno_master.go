@@ -256,9 +256,11 @@ func (idunno *IDUNNOMaster) ChangeModelList (model string, timeStart time.Time, 
 
 func (idunno *IDUNNOMaster) HandleLeaving(addr string) {
 	taskName := idunno.DeleteResourceTable(addr)
-	queryName := strings.Split(taskName, "-")[0]
-	model := strings.Split(taskName, "-")[2]
-	idunno.RollBackQuery(model, queryName, taskName)
+	if (taskName != "") {
+		queryName := strings.Split(taskName, "-")[0]
+		model := strings.Split(taskName, "-")[2]
+		idunno.RollBackQuery(model, queryName, taskName)
+	}
 }
 
 
