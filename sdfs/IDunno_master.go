@@ -422,9 +422,10 @@ func (idunno *IDUNNOMaster) DoScheduling(targetAddr string) {
 			fmt.Println("inference err:", err)
 			idunno.RollBackQuery(model, queryName, taskName)
 			return
-		} else {
-			fmt.Printf("Query %s finished.\n", taskName)
-		}
+		} 
+		// else {
+		// 	fmt.Printf("Query %s finished.\n", taskName)
+		// }
 		
 		timeEnd := time.Now()
 		idunno.ChangeModelList(model, timeStart, timeEnd)

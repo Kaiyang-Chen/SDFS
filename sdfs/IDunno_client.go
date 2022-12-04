@@ -28,7 +28,8 @@ func (is *InferenceService) Inference(args *Args, reply *string) error {
 		return err
 	}
 	tmp := strings.Split(args.OutputPath,"/")
-	taskName := tmp[0:len(tmp)-4]
+	tmpName := tmp[len(tmp)-1]
+	taskName := tmpName[0:len(tmpName)-4]
 	fmt.Println("Finished inferencing ",taskName)
 	// SdfsClient.PutFile(args.OutputPath, sdfsName)
 	*reply = string(res)
