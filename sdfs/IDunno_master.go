@@ -94,6 +94,7 @@ func GetRecentQueryRate(ModelName string) float64 {
 	return float64(count)/float64(TIMEGRAN)
 }
 
+
 func (idunno *IDUNNOMaster) GetTruncatedModelList() map[string]Model{
 	tmpModelList := make(map[string]Model)
 	for _, m := range idunno.ModelList {
@@ -380,6 +381,17 @@ func (idunno *IDUNNOMaster) HandleLeaving(addr string) {
 		queryName := strings.Split(taskName, "-")[0]
 		model := strings.Split(taskName, "-")[2]
 		idunno.RollBackQuery(model, queryName, taskName)
+	}
+}
+
+
+func (idunno *IDUNNOMaster) RollBackRunq() {
+	for _, m := range idunno.ModelList {
+		for i, n := 0, idunno.RunningJobQueues[m.ModelName].Len(); i < n; i++ {
+			taskName, _ := idunno.RunningJobQueues[m.ModelName].PopFront().(string)
+			queryName := strings.Split(taskName, "-")[0]
+			idunno.RollBackQuery(m.ModelName, queryName, taskName)
+		}
 	}
 }
 

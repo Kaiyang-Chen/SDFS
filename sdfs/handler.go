@@ -465,8 +465,11 @@ func (sdfs *SDFSClient) HandleNewMaster() {
 		log.Println("Failed Updating Master to all")
 		fmt.Println("Failed Updating Master to all")
 	}
-	// go SdfsClient.PeriodicalCheckMaster()
-	// go SdfsClient.PeriodicalCheckResource()
+	go sdfs.PeriodicalCheckMaster()
+	go sdfs.PeriodicalCheckResource()
+	IDunnoMaster.RollBackRunq()
+	go IDunnoMaster.ProcessQueryRequest()
+	go IDunnoMaster.Scheduler()
 
 }
 
