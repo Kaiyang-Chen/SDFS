@@ -22,11 +22,16 @@ func (is *InferenceService) Inference(args *Args, reply *string) error {
 	if err != nil {
 		return err
 	}
+	cmd = exec.Command("cat", args.OutputPath)
+	res, err = cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
 	// fmt.Println(res)
 	tmp := strings.Split(args.OutputPath,"/")
 	sdfsName := tmp[len(tmp)-1]
 	SdfsClient.PutFile(args.OutputPath, sdfsName)
-	*reply = res
+	*reply = string(res)
 	return nil
 }
 
