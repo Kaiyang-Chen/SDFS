@@ -3,11 +3,11 @@ package network
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
 	"sync"
-	"io"
 )
 
 func Listen(address string, messageHandler func([]byte) (bool, string, []byte)) error {
@@ -24,7 +24,7 @@ func Listen(address string, messageHandler func([]byte) (bool, string, []byte)) 
 	}
 
 	defer connection.Close()
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 8096)
 
 	for {
 		n, addr, err := connection.ReadFromUDP(buffer)
@@ -84,7 +84,7 @@ func ListenTcp(address string, messageHandler func([]byte) (bool, string, []byte
 	}
 
 	defer connection.Close()
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 8096)
 
 	for {
 		// n, addr, err := connection.ReadFromUDP(buffer)
@@ -153,7 +153,7 @@ func RecvFile(fileName string, conn *net.TCPConn, flag bool) {
 		n, err := conn.Read(buf)
 		// fmt.Println(n)
 		if err != nil || n == 0 {
-			if n == 0 || err == io.EOF{
+			if n == 0 || err == io.EOF {
 				// fmt.Println("File received: ", fileName)
 				log.Println("File received: ", fileName)
 				// _, err := conn.Write([]byte("received"))

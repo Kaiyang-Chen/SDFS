@@ -43,7 +43,7 @@ func Dial(host string, request []byte) ([]byte, error) {
 		log.Println(err)
 		return nil, err
 	}
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 8096)
 	n, _, err = connection.ReadFromUDP(buffer)
 	RecordReceivedPacket(n)
 	if !tossCoin() {
@@ -71,7 +71,7 @@ func SendFile(path string, conn *net.TCPConn) ([]byte, int, error) {
 	for {
 		n, err := f.Read(buf)
 		// fmt.Println(n)
-		if err != nil || n == 0{
+		if err != nil || n == 0 {
 			if n == 0 {
 				log.Println("file read done: ", path)
 				conn.Write(buf[:n])
@@ -87,7 +87,7 @@ func SendFile(path string, conn *net.TCPConn) ([]byte, int, error) {
 
 	// fmt.Println("end sending file: ", path)
 	// Check whether file transmission done on server side
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 8096)
 	// n, err := conn.Read(buffer)
 	// if err != nil {
 	// 	log.Println(err)
@@ -158,7 +158,7 @@ func SdfsDial(host string, FilePath string, sdfsName string, request []byte) ([]
 		log.Println(err)
 		return nil, err
 	}
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 8096)
 	n, err = connection.Read(buffer)
 	if err != nil {
 		log.Println(err)
