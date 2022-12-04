@@ -131,7 +131,7 @@ func (idunno *IDUNNOMaster) C3(model string, batchSize int) {
 }
 
 func (idunno *IDUNNOMaster) C4(taskName string) {
-	sdfsName := taskName + "-out"
+	sdfsName := taskName + "_out"
 	SdfsClient.GetFile("/home/kc68/files/"+sdfsName, sdfsName)
 	var cmd = exec.Command("cat", "/home/kc68/files/"+sdfsName)
 	res, err := cmd.CombinedOutput()

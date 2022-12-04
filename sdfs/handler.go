@@ -285,7 +285,7 @@ func (sdfs *SDFSClient) HandleGetFileReq(message FileMessage) (FileMessage, erro
 		ReplicaAddr:   nil,
 		CopyTable:     nil,
 		ActionID:      sdfs.MasterIncarnationID,
-		NumVersion:    0,
+		NumVersion:    1,
 		ResourceTable: nil,
 	}
 	return reply, err
