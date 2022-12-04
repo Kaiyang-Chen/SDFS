@@ -24,7 +24,7 @@ func Listen(address string, messageHandler func([]byte) (bool, string, []byte)) 
 	}
 
 	defer connection.Close()
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 8192)
 
 	for {
 		n, addr, err := connection.ReadFromUDP(buffer)
@@ -84,7 +84,7 @@ func ListenTcp(address string, messageHandler func([]byte) (bool, string, []byte
 	}
 
 	defer connection.Close()
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 8192)
 
 	for {
 		// n, addr, err := connection.ReadFromUDP(buffer)
