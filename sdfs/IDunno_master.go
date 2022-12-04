@@ -17,6 +17,7 @@ import (
 )
 
 const TIMEGRAN = 10
+const WAITQSIZE = 5
 const RES101 = "resnet101"
 const RES50 = "resnet50"
 
@@ -132,9 +133,10 @@ func (idunno *IDUNNOMaster) C3(model string, batchSize int) {
 
 func (idunno *IDUNNOMaster) C4(taskName string) {
 	sdfsName := taskName + "_out"
-	SdfsClient.GetFile("/home/kc68/files/"+sdfsName, sdfsName)
-	var cmd = exec.Command("cat", "/home/kc68/files/"+sdfsName)
+	// SdfsClient.GetFile("/home/kc68/files/"+sdfsName, sdfsName)
+	cmd := exec.Command("cat", "/home/kc68/files/"+sdfsName)
 	res, err := cmd.CombinedOutput()
+
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -145,7 +147,11 @@ func (idunno *IDUNNOMaster) C4(taskName string) {
 func (idunno *IDUNNOMaster) ProcessQueryRequest(){
 	for{
 		for _, m := range idunno.ModelList {
-			queries := GetRandomQuery(m.BatchSize)
+			if(idunno.WaitJobQueues[m.ModelName].Len() >= WAITQSIZE){
+				continue
+			}
+
+			queries := GetRandomQuery((m.BatchSize+idunno.WaitJobQueues[m.ModelName].Len())%WAITQSIZE)
 			idunno.WaitQMutex.Lock()
 			for _, q := range queries {
 				// fmt.Println(q)
@@ -373,9 +379,12 @@ func (idunno *IDUNNOMaster) DoInference(targetAddr string, model string, queryNa
 	err = client.Call("InferenceService.Inference", args, &inferenceResult)
 	if err != nil {
 		log.Println(err)
-	}else {
-		fmt.Println(inferenceResult)
+	}else{
+		fmt.Printf("Task %s done on machine %s.\n",taskName, targetAddr)
 	}
+	// else {
+	// 	fmt.Println(inferenceResult)
+	// }
 	return err
 }
 

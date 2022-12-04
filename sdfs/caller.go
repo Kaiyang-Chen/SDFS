@@ -261,8 +261,9 @@ func (sdfs *SDFSClient) SendTableCopy(host string, table map[string]FileAddr)  {
 		IncarnationNum: IDunnoMaster.IncarnationNum,
 		ModelList: IDunnoMaster.ModelList,
 	}
-	sdfs.SendMessage(message, host, "", "")
-	// fmt.Println(reply)
+	fmt.Println(message)
+	reply, _ := sdfs.SendMessage(message, host, "", "")
+	fmt.Println(reply)
 	return 
 }
 

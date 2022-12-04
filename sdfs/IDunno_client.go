@@ -27,10 +27,10 @@ func (is *InferenceService) Inference(args *Args, reply *string) error {
 	if err != nil {
 		return err
 	}
-	// fmt.Println(res)
 	tmp := strings.Split(args.OutputPath,"/")
-	sdfsName := tmp[len(tmp)-1]
-	SdfsClient.PutFile(args.OutputPath, sdfsName)
+	taskName := tmp[0:len(tmp)-4]
+	fmt.Println("Finished inferencing ",taskName)
+	// SdfsClient.PutFile(args.OutputPath, sdfsName)
 	*reply = string(res)
 	return nil
 }
