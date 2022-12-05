@@ -17,7 +17,7 @@ import (
 )
 
 const TIMEGRAN = 10
-const WAITQSIZE = 5
+const WAITQSIZE = 8
 const RES101 = "resnet101"
 const RES50 = "resnet50"
 
@@ -66,8 +66,8 @@ func InitIDunnoClient(){
 	IDunnoMaster.TriggerTime[RES101] = make(map[string]time.Time)
 	IDunnoMaster.ModelList = make(map[string]Model)
 	IDunnoMaster.IncarnationNum = 0
-	IDunnoMaster.ModelList[RES50] = Model{RES50, make([]float64, 0), 0, 2, 0, sync.RWMutex{}}
-	IDunnoMaster.ModelList[RES101] = Model{RES101, make([]float64, 0), 0, 2, 0, sync.RWMutex{}}
+	IDunnoMaster.ModelList[RES50] = Model{RES50, make([]float64, 0), 0, 5, 0, sync.RWMutex{}}
+	IDunnoMaster.ModelList[RES101] = Model{RES101, make([]float64, 0), 0, 5, 0, sync.RWMutex{}}
 
 	if config.MyConfig.IsIntroducer() {
 		go IDunnoMaster.ProcessQueryRequest()
@@ -437,9 +437,10 @@ func (idunno *IDUNNOMaster) DoInference(targetAddr string, model string, queryNa
 	err = client.Call("InferenceService.Inference", args, &inferenceResult)
 	if err != nil {
 		log.Println(err)
-	}else{
-		fmt.Printf("Task %s done on machine %s.\n",taskName, targetAddr)
 	}
+	// else{
+	// 	fmt.Printf("Task %s done on machine %s.\n",taskName, targetAddr)
+	// }
 	// else {
 	// 	fmt.Println(inferenceResult)
 	// }
