@@ -21,7 +21,7 @@ func (sdfs *SDFSClient) SendMessage(request FileMessage, host string, filePath s
 }
 
 func(sdfs *SDFSClient) SendFile(host string, filePath string, sdfsName string, success *chan bool, repAddr []string, copyTable map[string]FileAddr, IncarID int, Type int) (FileMessage, error){
-	fmt.Printf("Sending file %s.\n", sdfsName)
+	// fmt.Printf("Sending file %s.\n", sdfsName)
 	message := FileMessage{
 		SenderAddr:  config.MyConfig.GetSdfsAddr(),
 		MessageType: FILESENT,
@@ -194,7 +194,7 @@ func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 		ResourceTable: nil,
 	}
 	reply, err := sdfs.SendMessage(message, config.MyConfig.GetLeaderAddr(), "", sdfsName)
-
+	// fmt.Printf("[AckHandleTargetReq]: message=%v", reply)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -213,7 +213,7 @@ func(sdfs *SDFSClient) PutFile(filePath string, sdfsName string) error{
 		fmt.Println("Failed putting file\n")
 	} else{
 		log.Println("Succeed putting file\n")
-		fmt.Println("Succeed putting file\n")
+		// fmt.Println("Succeed putting file\n")
 	}
 	return nil
 
@@ -254,9 +254,16 @@ func (sdfs *SDFSClient) SendTableCopy(host string, table map[string]FileAddr)  {
 		ActionID: 	sdfs.MasterIncarnationID,
 		NumVersion:	0,
 		ResourceTable: sdfs.ResourceDistribution,
+		WaitJobQueues: IDunnoMaster.ShowWait(false),
+		RunningJobQueues: IDunnoMaster.ShowRun(false),
+		ResourceList: IDunnoMaster.ResourceTable,
+		TriggerTime: IDunnoMaster.GetLatestTrigger(),
+		IncarnationNum: IDunnoMaster.IncarnationNum,
+		ModelList: IDunnoMaster.GetTruncatedModelList(),
 	}
+	// fmt.Println(message)
 	sdfs.SendMessage(message, host, "", "")
-
+	// fmt.Println(reply)
 	return 
 }
 

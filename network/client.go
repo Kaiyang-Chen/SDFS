@@ -2,12 +2,12 @@ package network
 
 import (
 	"errors"
-	"fmt"
 	// "io"
 	"log"
 	"math/rand"
 	"net"
 	"os"
+	// "fmt"
 )
 
 const DropPacketProbability = 0.00
@@ -43,7 +43,7 @@ func Dial(host string, request []byte) ([]byte, error) {
 		log.Println(err)
 		return nil, err
 	}
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 8192)
 	n, _, err = connection.ReadFromUDP(buffer)
 	RecordReceivedPacket(n)
 	if !tossCoin() {
@@ -87,7 +87,7 @@ func SendFile(path string, conn *net.TCPConn) ([]byte, int, error) {
 
 	// fmt.Println("end sending file: ", path)
 	// Check whether file transmission done on server side
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 8192)
 	// n, err := conn.Read(buffer)
 	// if err != nil {
 	// 	log.Println(err)
@@ -158,7 +158,7 @@ func SdfsDial(host string, FilePath string, sdfsName string, request []byte) ([]
 		log.Println(err)
 		return nil, err
 	}
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 8192)
 	n, err = connection.Read(buffer)
 	if err != nil {
 		log.Println(err)
@@ -166,6 +166,7 @@ func SdfsDial(host string, FilePath string, sdfsName string, request []byte) ([]
 	}
 	if len(FilePath) != 0 && len(sdfsName) != 0 {
 		if "ok" == string(buffer[:n]) {
+			// fmt.Println("start sending file: ", FilePath)
 			buffer, n, err = SendFile(FilePath, connection)
 		}
 		CONN--
